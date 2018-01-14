@@ -9,7 +9,7 @@ using Byte = cpp::uint8_t;
 using Rune = cpp::int32_t;
 using Int = int;
 using Uint = unsigned int;
-using Uint32 = unsigned int;
+using Uint32 = cpp::uint32_t;
 using Int64 = cpp::int64_t;
 using Uint64 = cpp::uint64_t;
 using UintPtr = cpp::uintptr_t;
@@ -48,13 +48,14 @@ public:
 
     String operator+(String s) const {
         auto len = Len() + s.Len();
-        allocation<Byte> data(len);
+        allocation<Byte> data(len + 1);
         for (auto i = 0; i < Len(); ++i) {
             data[i] = _data[_pos + i];
         }
         for (auto i = 0; i < s.Len(); ++i) {
             data[Len() + i] = s[i];
         }
+        data[len] = 0;
         return String{data, 0, len};
     }
 
