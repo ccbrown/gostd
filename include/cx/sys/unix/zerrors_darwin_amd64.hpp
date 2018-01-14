@@ -1,10 +1,10 @@
 #pragma once
 
-#include <cx/typedefs.hpp>
+#include <cx.hpp>
 
 namespace cx::sys::unix {
 
-enum : UIntPtr {
+enum : UintPtr {
 	AF_APPLETALK                      = 0x10,
 	AF_CCITT                          = 0xa,
 	AF_CHAOS                          = 0x5,
@@ -425,20 +425,20 @@ enum : UIntPtr {
 	ECHOKE                            = 0x1,
 	ECHONL                            = 0x10,
 	ECHOPRT                           = 0x20,
-	EVFILT_AIO                        = UIntPtr(-0x3),
-	EVFILT_EXCEPT                     = UIntPtr(-0xf),
-	EVFILT_FS                         = UIntPtr(-0x9),
-	EVFILT_MACHPORT                   = UIntPtr(-0x8),
-	EVFILT_PROC                       = UIntPtr(-0x5),
-	EVFILT_READ                       = UIntPtr(-0x1),
-	EVFILT_SIGNAL                     = UIntPtr(-0x6),
+	EVFILT_AIO                        = UintPtr(-0x3),
+	EVFILT_EXCEPT                     = UintPtr(-0xf),
+	EVFILT_FS                         = UintPtr(-0x9),
+	EVFILT_MACHPORT                   = UintPtr(-0x8),
+	EVFILT_PROC                       = UintPtr(-0x5),
+	EVFILT_READ                       = UintPtr(-0x1),
+	EVFILT_SIGNAL                     = UintPtr(-0x6),
 	EVFILT_SYSCOUNT                   = 0xf,
 	EVFILT_THREADMARKER               = 0xf,
-	EVFILT_TIMER                      = UIntPtr(-0x7),
-	EVFILT_USER                       = UIntPtr(-0xa),
-	EVFILT_VM                         = UIntPtr(-0xc),
-	EVFILT_VNODE                      = UIntPtr(-0x4),
-	EVFILT_WRITE                      = UIntPtr(-0x2),
+	EVFILT_TIMER                      = UintPtr(-0x7),
+	EVFILT_USER                       = UintPtr(-0xa),
+	EVFILT_VM                         = UintPtr(-0xc),
+	EVFILT_VNODE                      = UintPtr(-0x4),
+	EVFILT_WRITE                      = UintPtr(-0x2),
 	EV_ADD                            = 0x1,
 	EV_CLEAR                          = 0x20,
 	EV_DELETE                         = 0x2,
@@ -1012,7 +1012,7 @@ enum : UIntPtr {
 	NOTE_NONE                         = 0x80,
 	NOTE_NSECONDS                     = 0x4,
 	NOTE_OOB                          = 0x2,
-	NOTE_PCTRLMASK                    = UIntPtr(-0x100000),
+	NOTE_PCTRLMASK                    = UintPtr(-0x100000),
 	NOTE_PDATAMASK                    = 0xfffff,
 	NOTE_REAP                         = 0x10000000,
 	NOTE_RENAME                       = 0x20,
@@ -1178,7 +1178,7 @@ enum : UIntPtr {
 	RTV_RTTVAR                        = 0x80,
 	RTV_SPIPE                         = 0x10,
 	RTV_SSTHRESH                      = 0x20,
-	RUSAGE_CHILDREN                   = UIntPtr(-0x1),
+	RUSAGE_CHILDREN                   = UintPtr(-0x1),
 	RUSAGE_SELF                       = 0x0,
 	SCM_CREDS                         = 0x3,
 	SCM_RIGHTS                        = 0x1,

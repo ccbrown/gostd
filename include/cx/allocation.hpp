@@ -1,54 +1,71 @@
 #pragma once
 
-#include <cx/typedefs.hpp>
+#include <cx/cpp.hpp>
 
 namespace cx {
-
-void* malloc(UInt64 size);
-void free(void* ptr);
 
 template <typename T>
 class allocation {
 public:
-    constexpr allocation() : _ptr{nullptr}, _refs{nullptr} {}
+    constexpr allocation() : _block{nullptr} {}
 
-    explicit allocation(UInt64 count)
-        : _ptr{reinterpret_cast<T*>(malloc(sizeof(T)*count))}
-        , _refs{reinterpret_cast<UInt64*>(malloc(sizeof(*_refs)))}
+    template <typename... Args>
+    explicit allocation(cpp::uint64_t count, Args... args)
+        : _block{reinterpret_cast<block*>(cpp::malloc(sizeof(block)+sizeof(T)*count))}
     {
-        *_refs = 1;
+        for (cpp::uint64_t i = 0; i < count; ++i) {
+            new(cpp::placement{_block->data + i}) T(args...);
+        }
+        _block->refs = 1;
     }
 
-    allocation(const allocation& other) : _ptr{other._ptr}, _refs{other._refs} {
-        ++*_refs;
+    allocation(const allocation& other) : _block{other._block} {
+        _increment();
     }
 
     allocation& operator=(const allocation& other) {
-        if (_refs && --*_refs == 0) {
-            free(_ptr);
-            free(_refs);
-        }
-        _ptr = other._ptr;
-        _refs = other._refs;
-        if (_refs) {
-            ++*_refs;
-        }
+        if (_block == other._block) { return *this; }
+        _decrement();
+        _block = other._block;
+        _increment();
         return *this;
     }
 
     ~allocation() {
-        if (_refs && --*_refs == 0) {
-            free(_ptr);
-            free(_refs);
+        _decrement();
+    }
+
+    constexpr operator bool() const { return _block; }
+
+    constexpr T& operator[](int i) const { return _block->data[i]; }
+
+    constexpr const cpp::size_t count() const {
+        return (cpp::malloc_size(_block) - sizeof(block)) / sizeof(T);
+    }
+
+private:
+    struct block {
+        cpp::uint64_t refs;
+        T data[0];
+    };
+
+    block* _block;
+
+    void _decrement() {
+        if (_block && --_block->refs == 0) {
+            auto end = count();
+            for (cpp::uint64_t i = 0; i < end; ++i) {
+                (_block->data + i)->~T();
+            }
+            cpp::free(_block);
         }
     }
 
-    constexpr T& operator[](int i) { return _ptr[i]; }
-    constexpr const T& operator[](int i) const { return _ptr[i]; }
-
-private:
-    T* _ptr;
-    UInt64* _refs;
+    void _increment() {
+        if (_block) {
+            ++_block->refs;
+        }
+    }
 };
 
 } // namespace cx

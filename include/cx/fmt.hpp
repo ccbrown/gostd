@@ -7,8 +7,8 @@ namespace cx::fmt {
 
 template <typename T>
 static String uitoa(T v) {
-    char buf[32];
-    auto i = sizeof(buf) - 1;
+    char buf[33] = {0};
+    auto i = sizeof(buf) - 2;
     while (v >= 10) {
         buf[i] = v%10 + '0';
         --i;
@@ -31,9 +31,10 @@ String sprintArg(T arg) {
     return String(arg);
 }
 
-String sprintArg(Int arg) { return itoa(arg); }
+static String sprintArg(Int arg) { return itoa(arg); }
+static String sprintArg(UintPtr arg) { return uitoa(arg); }
 
-String Sprint() {
+static String Sprint() {
     return "";
 }
 
@@ -48,7 +49,7 @@ String Sprint(Arg arg, Args... args) {
 
 template <typename Writer, typename... Args>
 auto Fprint(Writer w, Args... args) {
-    return w.Write(Slice<Byte>(Sprint(args...)));
+    return w->Write(Slice<Byte>(Sprint(args...)));
 }
 
 template <typename... Args>
@@ -59,11 +60,11 @@ auto Print(Args... args) {
 template <typename Writer, typename... Args>
 auto Fprintln(Writer w, Args... args) {
     struct { int n; Error err; } ret;
-    auto [n, err] = Print(args...);
+    auto [n, err] = Fprint(w, args...);
     ret.n = n;
     ret.err = err;
     if (!err) {
-        auto [n, err] = Print("\n");
+        auto [n, err] = Fprint(w, "\n");
         ret.n += n;
         ret.err = err;
     }

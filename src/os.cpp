@@ -2,9 +2,9 @@
 
 namespace cx::os {
 
-File Stdin{sys::unix::Stdin, "/dev/stdin"};
-File Stdout{sys::unix::Stdout, "/dev/stdout"};
-File Stderr{sys::unix::Stderr, "/dev/stderr"};
+Ptr<File> Stdin = New<File>(sys::unix::Stdin, "/dev/stdin");
+Ptr<File> Stdout = New<File>(sys::unix::Stdout, "/dev/stdout");
+Ptr<File> Stderr = New<File>(sys::unix::Stderr, "/dev/stderr");
 
 
 } // namespace cx::os

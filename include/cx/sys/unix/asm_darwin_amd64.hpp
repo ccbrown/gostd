@@ -1,10 +1,10 @@
 #pragma once
 
-#include <cx/typedefs.hpp>
+#include <cx.hpp>
 
 namespace cx::sys::unix {
 
-static auto syscall6(UIntPtr trap, UIntPtr a1, UIntPtr a2, UIntPtr a3, UIntPtr a4, UIntPtr a5, UIntPtr a6) {
+static auto syscall6(UintPtr trap, UintPtr a1, UintPtr a2, UintPtr a3, UintPtr a4, UintPtr a5, UintPtr a6) {
     struct {
         unsigned long long r1, r2, errno;
     } ret;

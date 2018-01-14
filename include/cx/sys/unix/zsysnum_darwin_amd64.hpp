@@ -1,10 +1,10 @@
 #pragma once
 
-#include <cx/typedefs.hpp>
+#include <cx.hpp>
 
 namespace cx::sys::unix {
 
-enum : UIntPtr {
+enum : UintPtr {
     SYS_SYSCALL                        = 0,
     SYS_EXIT                           = 1,
     SYS_FORK                           = 2,
