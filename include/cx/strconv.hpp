@@ -71,6 +71,8 @@ static String Itoa(Int i) {
 }
 
 struct NumError {
+    NumError(String func, String num, Error err) : Func{func}, Num{num}, Err{err} {}
+
     String Func;
     String Num;
     Error Err;
@@ -86,7 +88,7 @@ static auto ParseUint(String s, Int base, Int bitSize) {
     struct { Uint64 n = 0; Error err; } ret;
 
     if (s.Len() == 0) {
-        ret.err = NumError{"ParseUint", s, ErrSyntax};
+        ret.err = New<NumError>("ParseUint", s, ErrSyntax);
         return ret;
     }
 
@@ -140,7 +142,6 @@ static auto ParseUint(String s, Int base, Int bitSize) {
 
         auto n2 = ret.n + v;
         if (n2 < ret.n || n2 > maxVal) {
-            fmt::Println(n2, maxVal, bitSize);
             ret.n = cpp::UINT64_MAX;
             ret.err = ErrRange;
             goto Error;
@@ -151,7 +152,7 @@ static auto ParseUint(String s, Int base, Int bitSize) {
     return ret;
 
 Error:
-    ret.err = NumError{"ParseUint", s, ret.err};
+    ret.err = New<NumError>("ParseUint", s, ret.err);
     return ret;
 }
 
@@ -159,7 +160,7 @@ static auto ParseInt(String s, Int base, Int bitSize) {
     struct { Int64 n = 0; Error err; } ret;
 
     if (s.Len() == 0) {
-        ret.err = NumError{"ParseInt", s, ErrSyntax};
+        ret.err = New<NumError>("ParseInt", s, ErrSyntax);
         return ret;
     }
 
@@ -174,7 +175,10 @@ static auto ParseInt(String s, Int base, Int bitSize) {
 
     auto [un, err] = ParseUint(s, base, bitSize);
     if (err) {
-        // TODO: once interfaces / Error are improved, this needs to convert the ParseUint error
+        if (auto [ne, ok] = err.As<Ptr<NumError>>(); ok) {
+            ne->Func = "ParseInt";
+            ne->Num = s0;
+        }
         ret.err = err;
         return ret;
     }
@@ -182,10 +186,10 @@ static auto ParseInt(String s, Int base, Int bitSize) {
     auto cutoff = Uint64(1) << (bitSize - 1);
     if (!neg && un >= cutoff) {
         ret.n = cutoff - 1;
-        ret.err = NumError{"ParseInt", s0, ErrRange};
+        ret.err = New<NumError>("ParseInt", s0, ErrRange);
     } else if (neg && un > cutoff) {
         ret.n = -Int64(cutoff);
-        ret.err = NumError{"ParseInt", s0, ErrRange};
+        ret.err = New<NumError>("ParseInt", s0, ErrRange);
     } else {
         ret.n = un;
         if (neg) {
