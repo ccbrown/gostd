@@ -3,6 +3,7 @@
 #include <cx.hpp>
 #include <cx/io.hpp>
 #include <cx/sys/unix.hpp>
+#include <cx/errors.hpp>
 
 namespace cx::os {
 
@@ -39,6 +40,8 @@ enum : Int {
 };
 
 struct PathError {
+    PathError(String op, String path, Error err) : Op{op}, Path{path}, Err{err} {}
+
     String Op;
     String Path;
     Error Err;
@@ -65,6 +68,30 @@ public:
         return ret;
     }
 
+    auto Seek(Int64 offset, Int whence) const {
+        auto ret = sys::unix::Seek(_fd, offset, whence);
+        ret.err = _wrapErr("seek", ret.err);
+        return ret;
+    }
+
+    auto ReadAt(Slice<Byte> b, Int64 off) const {
+        struct { Int n = 0; Error err; } ret;
+        if (off < 0) {
+            ret.err = New<PathError>("readat", _name, errors::New("negative offset"));
+            return ret;
+        }
+
+        if (auto [_, err] = Seek(off, io::SeekStart); err) {
+            ret.err = _wrapErr("read", err);
+            return ret;
+        }
+
+        auto [n, err] =  Read(b);
+        ret.n = n;
+        ret.err = err;
+        return ret;
+    }
+
     auto Write(Slice<Byte> b) const {
         auto [n, err] = sys::unix::Write(_fd, b);
         err = _wrapErr("write", err);
@@ -80,7 +107,7 @@ private:
         if (!err) {
             return err;
         }
-        return PathError{op, _name, err};
+        return New<PathError>(op, _name, err);
     }
 };
 
@@ -90,7 +117,7 @@ static auto OpenFile(String name, Int flag, FileMode perm) {
     struct { Ptr<File> file; Error err; } ret;
     auto [fd, err] = sys::unix::Open(name, flag|sys::unix::O_CLOEXEC, 0);
     if (err) {
-        ret.err = PathError{"open", name, err};
+        ret.err = New<PathError>("open", name, err);
         return ret;
     }
     ret.file = New<File>(fd, name);

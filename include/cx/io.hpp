@@ -6,6 +6,12 @@ namespace cx::io {
 
 extern Error ErrShortBuffer, ErrShortWrite, EOF;
 
+enum {
+    SeekStart   = 0,
+    SeekCurrent = 1,
+    SeekEnd     = 2,
+};
+
 struct Reader {
     Reader() {}
 
@@ -19,6 +25,46 @@ struct Reader {
 
     struct ReadResult { Int n; Error err; };
     Func<ReadResult(Slice<Byte>)> Read;
+};
+
+struct ReaderAt {
+    ReaderAt() {}
+
+    template <typename T>
+    ReaderAt(T r) {
+        ReadAt = [=](Slice<Byte> p, Int64 off) {
+            auto [n, err] = r->ReadAt(p, off);
+            return ReadAtResult{n, err};
+        };
+    }
+
+    struct ReadAtResult { Int n; Error err; };
+    Func<ReadAtResult(Slice<Byte>, Int64)> ReadAt;
+};
+
+class SectionReader {
+public:
+    SectionReader(ReaderAt r, Int64 off, Int64 n)
+        : _r{r}, _base{off}, _off{off}, _limit{off+n}
+    {}
+
+    Reader::ReadResult Read(Slice<Byte> p) {
+        if (_off >= _limit) {
+            return {0, EOF};
+        }
+        if (auto max = _limit - _off; p.Len() > max) {
+            p = p.Head(max);
+        }
+        auto [n, err] = _r.ReadAt(p, _off);
+        _off += n;
+        return {n, err};
+    }
+
+private:
+    ReaderAt _r;
+    Int64 _base;
+    Int64 _off;
+    Int64 _limit;
 };
 
 struct Writer {

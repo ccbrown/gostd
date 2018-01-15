@@ -164,4 +164,68 @@ template <typename T> struct add_rvalue_reference { typedef typename detail::add
 template <typename ...>
 using void_t = void;
 
+template <typename T>
+struct is_floating_point
+     : integral_constant<
+         bool,
+         is_same<float, typename remove_cv<T>::type>::value  ||
+         is_same<double, typename remove_cv<T>::type>::value  ||
+         is_same<long double, typename remove_cv<T>::type>::value
+     > {};
+
+namespace detail {
+    template <typename T> struct is_integral : false_type {};
+
+    template <> struct is_integral<bool>               : true_type {};
+    template <> struct is_integral<char>               : true_type {};
+    template <> struct is_integral<signed char>        : true_type {};
+    template <> struct is_integral<unsigned char>      : true_type {};
+    template <> struct is_integral<wchar_t>            : true_type {};
+    template <> struct is_integral<char16_t>           : true_type {};
+    template <> struct is_integral<char32_t>           : true_type {};
+    template <> struct is_integral<short>              : true_type {};
+    template <> struct is_integral<unsigned short>     : true_type {};
+    template <> struct is_integral<int>                : true_type {};
+    template <> struct is_integral<unsigned int>       : true_type {};
+    template <> struct is_integral<long>               : true_type {};
+    template <> struct is_integral<unsigned long>      : true_type {};
+    template <> struct is_integral<long long>          : true_type {};
+    template <> struct is_integral<unsigned long long> : true_type {};
+}
+
+template <typename T> struct is_integral: detail::is_integral<typename remove_cv<T>::type> {};
+
+template <typename T>
+struct is_arithmetic : integral_constant<bool, is_integral<T>::value || is_floating_point<T>::value> {};
+
+namespace detail {
+    template <typename T, bool = is_arithmetic<T>::value>
+    struct is_unsigned : integral_constant<bool, T(0) < T(-1)> {};
+
+    template <typename T>
+    struct is_unsigned<T, false> : false_type {};
+}
+
+template <typename T> struct is_unsigned : detail::is_unsigned<T>::type {};
+
+#if __has_feature(is_union)
+template <typename T> struct is_union : integral_constant<bool, __is_union(T)> {};
+#endif
+
+#if __has_feature(is_enum)
+template <typename T> struct is_enum : integral_constant<bool, __is_enum(T)> {};
+#endif
+
+namespace detail {
+    template <typename T> char class_test(int T::*);
+    template <typename T> int class_test(...);
+}
+
+template <typename T>
+struct is_class : integral_constant<bool, sizeof(detail::class_test<T>(0))==1 && !is_union<T>::value> {};
+
+#if __has_feature(underlying_type)
+template <class T> struct underlying_type { typedef __underlying_type(T) type; };
+#endif
+
 } // namespace cx::cpp

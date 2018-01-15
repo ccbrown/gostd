@@ -97,6 +97,16 @@ static auto Write(Int fd, Slice<Byte> p) {
     return ret;
 }
 
+static auto Seek(Int fd, Int64 offset, Int whence) {
+    struct { Int64 off; Error err; } ret;
+    auto [r1, r2, errno] = Syscall(SYS_LSEEK, fd, offset, whence);
+    ret.off = r1;
+    if (errno != 0) {
+        ret.err = errno;
+    }
+    return ret;
+}
+
 static auto Openat(Int dirfd, String path, Int flags, Uint32 mode) {
     struct { Int fd; Error err; } ret;
     auto [r1, r2, errno] = Syscall(SYS_OPEN, UintPtr(path.NullTerminated().CString()), flags, mode);

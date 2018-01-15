@@ -1,6 +1,7 @@
 #pragma once
 
 #include <cx.hpp>
+#include <cx/cpp.hpp>
 #include <cx/os.hpp>
 
 namespace cx::fmt {
@@ -26,13 +27,41 @@ static String itoa(T v) {
     return uitoa(v);
 }
 
-template <typename T>
-String sprintArg(T arg) {
-    return String(arg);
-}
+template <typename T, typename = void>
+struct formatter {
+    static String sprint(T arg) {
+        return String(arg);
+    }
+};
 
-static String sprintArg(Int arg) { return itoa(arg); }
-static String sprintArg(UintPtr arg) { return uitoa(arg); }
+template <typename T>
+struct formatter<T, typename cpp::enable_if<cpp::is_same<T, char>::value>::type> {
+    static String sprint(T arg) {
+        return String(&arg, 1);
+    }
+};
+
+template <typename T>
+struct formatter<T, typename cpp::enable_if<!cpp::is_same<T, char>::value && cpp::is_integral<T>::value && !cpp::is_unsigned<T>::value>::type> {
+    static String sprint(T arg) {
+        return itoa(arg);
+    }
+};
+
+template <typename T>
+struct formatter<T, typename cpp::enable_if<cpp::is_integral<T>::value && cpp::is_unsigned<T>::value>::type> {
+    static String sprint(T arg) {
+        return uitoa(arg);
+    }
+};
+
+template <typename T>
+struct formatter<T, typename cpp::enable_if<cpp::is_enum<T>::value>::type> {
+    using U = typename cpp::underlying_type<T>::type;
+    static String sprint(T arg) {
+        return formatter<U>::sprint(static_cast<U>(arg));
+    }
+};
 
 static String Sprint() {
     return "";
@@ -40,7 +69,7 @@ static String Sprint() {
 
 template <typename Arg, typename... Args>
 String Sprint(Arg arg, Args... args) {
-    auto ret = sprintArg(arg);
+    auto ret = formatter<Arg>::sprint(arg);
     if (sizeof...(args) > 0) {
         ret = ret + " ";
     }

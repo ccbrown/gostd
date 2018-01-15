@@ -7,6 +7,8 @@ namespace cx {
 
 using Byte = cpp::uint8_t;
 using Rune = cpp::int32_t;
+using Uint8 = cpp::uint8_t;
+using Uint16 = cpp::uint16_t;
 using Int = int;
 using Uint = unsigned int;
 using Uint32 = cpp::uint32_t;
@@ -248,6 +250,9 @@ public:
 
     constexpr operator bool() const { return _data; }
 
+    T& operator *() { return _data[0]; }
+    const T& operator *() const { return _data[0]; }
+
 private:
     template <typename... Args>
     Ptr(void*, Args... args) : _data{1, args...} {}
@@ -258,6 +263,16 @@ private:
 template <typename T, typename... Args>
 Ptr<T> New(Args... args) {
     return Ptr<T>::New(args...);
+}
+
+template <typename Destination, typename Source>
+Int Copy(Destination dst, Source src) {
+    Int i = 0;
+    while (i < dst.Len() && i < src.Len()) {
+        dst[i] = src[i];
+        ++i;
+    }
+    return i;
 }
 
 } // namespace cx

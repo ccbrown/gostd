@@ -1,4 +1,5 @@
 #include <cx/cmd/ar.hpp>
+#include <cx/cmd/nm.hpp>
 #include <cx/fmt.hpp>
 #include <cx/os.hpp>
 #include <cx/strconv.hpp>
@@ -13,6 +14,8 @@ int main(int argc, const char* argv[]) {
 
     if (argc > 1 && cx::String(argv[1]) == "ar") {
         return cmd::ar::Run(args.Tail(2));
+    } else if (argc > 1 && cx::String(argv[1]) == "nm") {
+        return cmd::nm::Run(args.Tail(2));
     }
 
     {
