@@ -38,6 +38,15 @@ public:
         return {header, err};
     }
 
+    io::Reader::ReadResult Read(Slice<Byte> b) {
+        if (_unread == 0) {
+            return {0, io::EOF};
+        }
+        auto [n, err] = io::LimitedReader{_r, _unread}.Read(b);
+        _unread -= n;
+        return {n, err};
+    }
+
 private:
     io::Reader _r;
     bool _didReadArchiveHeader = false;
@@ -131,6 +140,17 @@ private:
         } else {
             header->Size = n;
             str = str.Tail(10);
+        }
+
+        if (strings::HasPrefix(header->Name, "#1/")) {
+            auto [nlen, err] = strconv::ParseInt(header->Name.Tail(3), 10, 32);
+            if (!err) {
+                Slice<Byte> buf(nlen);
+                if (auto [_, err] = io::ReadFull(_r, buf); !err) {
+                    header->Name = String(bytes::TrimRight(buf, "\0"));
+                    header->Size -= nlen;
+                }
+            }
         }
 
         _unread = header->Size;

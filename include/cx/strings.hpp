@@ -5,6 +5,30 @@
 
 namespace cx::strings {
 
+static bool HasPrefix(String s, String prefix) {
+    if (prefix.Len() > s.Len()) {
+        return false;
+    }
+    for (Int i = 0; i < prefix.Len(); ++i) {
+        if (s[i] != prefix[i]) {
+            return false;
+        }
+    }
+    return true;
+}
+
+static bool HasSuffix(String s, String suffix) {
+    if (suffix.Len() > s.Len()) {
+        return false;
+    }
+    for (Int i = 0; i < suffix.Len(); ++i) {
+        if (s[s.Len() - suffix.Len() + i] != suffix[i]) {
+            return false;
+        }
+    }
+    return true;
+}
+
 static Int IndexByte(String s, Byte b) {
     for (Int i = 0; i < s.Len(); i++) {
         if (s[i] == b) {

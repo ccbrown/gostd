@@ -1,6 +1,10 @@
 #include <cx/os.hpp>
 
+#include <cx/errors.hpp>
+
 namespace cx::os {
+
+Error ErrExist = errors::New("file already exists");
 
 Ptr<File> Stdin = New<File>(sys::unix::Stdin, "/dev/stdin");
 Ptr<File> Stdout = New<File>(sys::unix::Stdout, "/dev/stdout");

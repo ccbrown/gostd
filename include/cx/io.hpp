@@ -23,7 +23,7 @@ struct Reader {
         };
     }
 
-    struct ReadResult { Int n; Error err; };
+    struct ReadResult { Int n = 0; Error err; };
     Func<ReadResult(Slice<Byte>)> Read;
 };
 
@@ -38,7 +38,7 @@ struct ReaderAt {
         };
     }
 
-    struct ReadAtResult { Int n; Error err; };
+    struct ReadAtResult { Int n = 0; Error err; };
     Func<ReadAtResult(Slice<Byte>, Int64)> ReadAt;
 };
 

@@ -1,6 +1,7 @@
 #pragma once
 
 #include <cx.hpp>
+#include <cx/sys/unix/errno.hpp>
 
 namespace cx::sys::unix {
 
@@ -1468,6 +1469,114 @@ enum : UintPtr {
 	WSTOPPED                          = 0x8,
 	WUNTRACED                         = 0x2,
 };
+
+constexpr Errno E2BIG           = Errno(0x7);
+constexpr Errno EACCES          = Errno(0xd);
+constexpr Errno EADDRINUSE      = Errno(0x30);
+constexpr Errno EADDRNOTAVAIL   = Errno(0x31);
+constexpr Errno EAFNOSUPPORT    = Errno(0x2f);
+constexpr Errno EAGAIN          = Errno(0x23);
+constexpr Errno EALREADY        = Errno(0x25);
+constexpr Errno EAUTH           = Errno(0x50);
+constexpr Errno EBADARCH        = Errno(0x56);
+constexpr Errno EBADEXEC        = Errno(0x55);
+constexpr Errno EBADF           = Errno(0x9);
+constexpr Errno EBADMACHO       = Errno(0x58);
+constexpr Errno EBADMSG         = Errno(0x5e);
+constexpr Errno EBADRPC         = Errno(0x48);
+constexpr Errno EBUSY           = Errno(0x10);
+constexpr Errno ECANCELED       = Errno(0x59);
+constexpr Errno ECHILD          = Errno(0xa);
+constexpr Errno ECONNABORTED    = Errno(0x35);
+constexpr Errno ECONNREFUSED    = Errno(0x3d);
+constexpr Errno ECONNRESET      = Errno(0x36);
+constexpr Errno EDEADLK         = Errno(0xb);
+constexpr Errno EDESTADDRREQ    = Errno(0x27);
+constexpr Errno EDEVERR         = Errno(0x53);
+constexpr Errno EDOM            = Errno(0x21);
+constexpr Errno EDQUOT          = Errno(0x45);
+constexpr Errno EEXIST          = Errno(0x11);
+constexpr Errno EFAULT          = Errno(0xe);
+constexpr Errno EFBIG           = Errno(0x1b);
+constexpr Errno EFTYPE          = Errno(0x4f);
+constexpr Errno EHOSTDOWN       = Errno(0x40);
+constexpr Errno EHOSTUNREACH    = Errno(0x41);
+constexpr Errno EIDRM           = Errno(0x5a);
+constexpr Errno EILSEQ          = Errno(0x5c);
+constexpr Errno EINPROGRESS     = Errno(0x24);
+constexpr Errno EINTR           = Errno(0x4);
+constexpr Errno EINVAL          = Errno(0x16);
+constexpr Errno EIO             = Errno(0x5);
+constexpr Errno EISCONN         = Errno(0x38);
+constexpr Errno EISDIR          = Errno(0x15);
+constexpr Errno ELAST           = Errno(0x69);
+constexpr Errno ELOOP           = Errno(0x3e);
+constexpr Errno EMFILE          = Errno(0x18);
+constexpr Errno EMLINK          = Errno(0x1f);
+constexpr Errno EMSGSIZE        = Errno(0x28);
+constexpr Errno EMULTIHOP       = Errno(0x5f);
+constexpr Errno ENAMETOOLONG    = Errno(0x3f);
+constexpr Errno ENEEDAUTH       = Errno(0x51);
+constexpr Errno ENETDOWN        = Errno(0x32);
+constexpr Errno ENETRESET       = Errno(0x34);
+constexpr Errno ENETUNREACH     = Errno(0x33);
+constexpr Errno ENFILE          = Errno(0x17);
+constexpr Errno ENOATTR         = Errno(0x5d);
+constexpr Errno ENOBUFS         = Errno(0x37);
+constexpr Errno ENODATA         = Errno(0x60);
+constexpr Errno ENODEV          = Errno(0x13);
+constexpr Errno ENOENT          = Errno(0x2);
+constexpr Errno ENOEXEC         = Errno(0x8);
+constexpr Errno ENOLCK          = Errno(0x4d);
+constexpr Errno ENOLINK         = Errno(0x61);
+constexpr Errno ENOMEM          = Errno(0xc);
+constexpr Errno ENOMSG          = Errno(0x5b);
+constexpr Errno ENOPOLICY       = Errno(0x67);
+constexpr Errno ENOPROTOOPT     = Errno(0x2a);
+constexpr Errno ENOSPC          = Errno(0x1c);
+constexpr Errno ENOSR           = Errno(0x62);
+constexpr Errno ENOSTR          = Errno(0x63);
+constexpr Errno ENOSYS          = Errno(0x4e);
+constexpr Errno ENOTBLK         = Errno(0xf);
+constexpr Errno ENOTCONN        = Errno(0x39);
+constexpr Errno ENOTDIR         = Errno(0x14);
+constexpr Errno ENOTEMPTY       = Errno(0x42);
+constexpr Errno ENOTRECOVERABLE = Errno(0x68);
+constexpr Errno ENOTSOCK        = Errno(0x26);
+constexpr Errno ENOTSUP         = Errno(0x2d);
+constexpr Errno ENOTTY          = Errno(0x19);
+constexpr Errno ENXIO           = Errno(0x6);
+constexpr Errno EOPNOTSUPP      = Errno(0x66);
+constexpr Errno EOVERFLOW       = Errno(0x54);
+constexpr Errno EOWNERDEAD      = Errno(0x69);
+constexpr Errno EPERM           = Errno(0x1);
+constexpr Errno EPFNOSUPPORT    = Errno(0x2e);
+constexpr Errno EPIPE           = Errno(0x20);
+constexpr Errno EPROCLIM        = Errno(0x43);
+constexpr Errno EPROCUNAVAIL    = Errno(0x4c);
+constexpr Errno EPROGMISMATCH   = Errno(0x4b);
+constexpr Errno EPROGUNAVAIL    = Errno(0x4a);
+constexpr Errno EPROTO          = Errno(0x64);
+constexpr Errno EPROTONOSUPPORT = Errno(0x2b);
+constexpr Errno EPROTOTYPE      = Errno(0x29);
+constexpr Errno EPWROFF         = Errno(0x52);
+constexpr Errno ERANGE          = Errno(0x22);
+constexpr Errno EREMOTE         = Errno(0x47);
+constexpr Errno EROFS           = Errno(0x1e);
+constexpr Errno ERPCMISMATCH    = Errno(0x49);
+constexpr Errno ESHLIBVERS      = Errno(0x57);
+constexpr Errno ESHUTDOWN       = Errno(0x3a);
+constexpr Errno ESOCKTNOSUPPORT = Errno(0x2c);
+constexpr Errno ESPIPE          = Errno(0x1d);
+constexpr Errno ESRCH           = Errno(0x3);
+constexpr Errno ESTALE          = Errno(0x46);
+constexpr Errno ETIME           = Errno(0x65);
+constexpr Errno ETIMEDOUT       = Errno(0x3c);
+constexpr Errno ETOOMANYREFS    = Errno(0x3b);
+constexpr Errno ETXTBSY         = Errno(0x1a);
+constexpr Errno EUSERS          = Errno(0x44);
+constexpr Errno EWOULDBLOCK     = Errno(0x23);
+constexpr Errno EXDEV           = Errno(0x12);
 
 constexpr const char* errors[] = {
     "",

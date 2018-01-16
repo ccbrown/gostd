@@ -40,6 +40,7 @@ public:
     constexpr T& operator[](int i) const { return _block->data[i]; }
 
     constexpr const cpp::size_t count() const {
+        if (!_block) { return 0; }
         return (cpp::malloc_size(_block) - sizeof(block)) / sizeof(T);
     }
 

@@ -7,64 +7,46 @@
 #include <cx/sys/unix/zsysnum_darwin_amd64.hpp>
 #include <cx/sys/unix/ztypes_darwin_amd64.hpp>
 
+extern char** environ;
+
 namespace cx::sys::unix {
 
-template <typename T>
-static String uitoa(T v) {
-    char buf[33] = {0};
-    auto i = sizeof(buf) - 2;
-    while (v >= 10) {
-        buf[i] = v%10 + '0';
-        --i;
-        v /= 10;
-    }
-    buf[i] = v + '0';
-    return buf + i;
-}
-
-template <typename T>
-static String itoa(T v) {
-    if (v < 0) {
-        return "-" + uitoa(-v);
-    }
-    return uitoa(v);
-}
-
-class Errno {
-public:
-    constexpr Errno() : _errno{0} {}
-    explicit constexpr Errno(UintPtr errno) : _errno{errno} {}
-
-    constexpr Errno& operator=(UintPtr errno) {
-        _errno = errno;
-        return *this;
-    }
-
-    constexpr operator UintPtr() const { return _errno; }
-
-    String Error() const {
-        auto errno = Int(_errno);
-        if (errno > 0 && errno <= sizeof(errors) / sizeof(*errors)) {
-            return errors[errno];
-        }
-        return "errno " + itoa(errno);
-    }
-
-private:
-    UintPtr _errno;
-};
-
-static auto RawSyscall(UintPtr trap, UintPtr a1, UintPtr a2, UintPtr a3) {
+static auto RawSyscall6(UintPtr trap, UintPtr a1, UintPtr a2, UintPtr a3, UintPtr a4, UintPtr a5, UintPtr a6) {
     struct { UintPtr r1, r2; Errno errno; } ret;
-    auto [r1, r2, errno] = syscall6(trap, a1, a2, a3, 0, 0, 0);
+    auto [r1, r2, errno] = syscall6(trap, a1, a2, a3, a4, a5, a6);
     ret.r1 = r1;
     ret.r2 = r1;
     ret.errno = errno;
     return ret;
 }
 
+static auto RawSyscall(UintPtr trap, UintPtr a1, UintPtr a2, UintPtr a3) {
+    return RawSyscall6(trap, a1, a2, a3, 0, 0, 0);
+}
+
 static auto Syscall(UintPtr trap, UintPtr a1, UintPtr a2, UintPtr a3) {
     return RawSyscall(trap, a1, a2, a3);
+}
+
+static auto Syscall6(UintPtr trap, UintPtr a1, UintPtr a2, UintPtr a3, UintPtr a4, UintPtr a5, UintPtr a6) {
+    return RawSyscall6(trap, a1, a2, a3, a4, a5, a6);
+}
+
+static auto Getenv(String key) {
+    struct { String value; bool found = false; } ret;
+    for (int i = 0; environ[i]; ++i) {
+        auto kv = environ[i];
+        for (int j = 0; kv[j]; ++j) {
+            if (kv[j] == '=') {
+                if (key == String(kv, j)) {
+                    ret.value = String(kv+j+1);
+                    ret.found = true;
+                }
+                break;
+            }
+        }
+    }
+    return ret;
 }
 
 static Error Close(Int fd) {
@@ -109,7 +91,7 @@ static auto Seek(Int fd, Int64 offset, Int whence) {
 
 static auto Openat(Int dirfd, String path, Int flags, Uint32 mode) {
     struct { Int fd; Error err; } ret;
-    auto [r1, r2, errno] = Syscall(SYS_OPEN, UintPtr(path.NullTerminated().CString()), flags, mode);
+    auto [r1, r2, errno] = Syscall6(SYS_OPENAT, dirfd, UintPtr(path.NullTerminated().CString()), flags, mode, 0, 0);
     ret.fd = r1;
     if (errno != 0) {
         ret.err = errno;
@@ -119,6 +101,22 @@ static auto Openat(Int dirfd, String path, Int flags, Uint32 mode) {
 
 static auto Open(String path, Int mode, Uint32 perm) {
     return Openat(AT_FDCWD, path, mode, perm);
+}
+
+static Error Unlinkat(Int dirfd, String path, Int flags) {
+    auto [r1, r2, errno] = Syscall(SYS_UNLINKAT, dirfd, UintPtr(path.NullTerminated().CString()), flags);
+    if (errno != 0) {
+        return errno;
+    }
+    return {};
+}
+
+static Error Unlink(String path) {
+    return Unlinkat(AT_FDCWD, path, 0);
+}
+
+static Error Rmdir(String path) {
+    return Unlinkat(AT_FDCWD, path, AT_REMOVEDIR);
 }
 
 constexpr Int Stdin = 0;

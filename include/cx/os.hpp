@@ -7,6 +7,8 @@
 
 namespace cx::os {
 
+extern Error ErrExist;
+
 using FileMode = Uint32;
 
 enum : FileMode {
@@ -55,7 +57,15 @@ class File {
 public:
     File(UintPtr fd, String name) : _fd{fd}, _name{name} {}
     ~File() {
-        sys::unix::Close(_fd);
+        Close();
+    }
+
+    Error Close() {
+        if (_fd != UintPtr(-1)) {
+            sys::unix::Close(_fd);
+            _fd = UintPtr(-1);
+        }
+        return {};
     }
 
     auto Read(Slice<Byte> b) const {
@@ -99,8 +109,10 @@ public:
         return ret;
     }
 
+    auto Name() const { return _name; }
+
 private:
-    const UintPtr _fd;
+    UintPtr _fd;
     const String _name;
 
     Error _wrapErr(String op, Error err) const {
@@ -126,6 +138,40 @@ static auto OpenFile(String name, Int flag, FileMode perm) {
 
 static auto Open(String name) {
     return OpenFile(name, O_RDONLY, 0);
+}
+
+static auto Getenv(String key) {
+    return sys::unix::Getenv(key);
+}
+
+static String TempDir() {
+    if (auto [v, ok] = Getenv("TMPDIR"); ok) {
+        return v;
+    }
+    return "/tmp";
+}
+
+static Error Remove(String name) {
+    if (auto e = sys::unix::Unlink(name); !e) {
+        return {};
+    } else if (auto e1 = sys::unix::Rmdir(name); !e1) {
+        return {};
+    } else {
+        return New<PathError>("remove", name, e1 == sys::unix::ENOTDIR ? e : e1);
+    }
+}
+
+static Error underlyingError(Error err) {
+    if (auto [pe, ok] = err.As<Ptr<PathError>>(); ok) {
+        return pe->Err;
+    }
+    // TODO: add LinkError and SyscallError
+    return err;
+}
+
+static bool IsExist(Error err) {
+    err = underlyingError(err);
+    return err == sys::unix::EEXIST || err == sys::unix::ENOTEMPTY || err == ErrExist;
 }
 
 } // namespace cx::os
