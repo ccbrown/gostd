@@ -10,6 +10,7 @@ using Rune = cpp::int32_t;
 using Uint8 = cpp::uint8_t;
 using Uint16 = cpp::uint16_t;
 using Int = int;
+using Int32 = cpp::int32_t;
 using Uint = unsigned int;
 using Uint32 = cpp::uint32_t;
 using Int64 = cpp::int64_t;
@@ -147,7 +148,14 @@ public:
 
     explicit Slice(Int len, Int cap = 0) : _data(cap >= len ? cap : len), _len{len} {}
 
-    explicit Slice(String s) : _data(s.Len()), _len{s.Len()} {
+    template <typename... Rem>
+    explicit Slice(T next, Rem&&... rem) : _data(1 + sizeof...(rem)), _len{1} {
+        _data[0] = cpp::move(next);
+        _append(cpp::forward<Rem>(rem)...);
+    }
+
+    template <typename U = T>
+    explicit Slice(String s, typename cpp::enable_if<cpp::is_same<U, Byte>::value>::type* = 0) : _data(s.Len()), _len{s.Len()} {
         for (Int i = 0; i < _len; ++i) {
             _data[i] = s[i];
         }
@@ -194,20 +202,31 @@ public:
         return ret;
     }
 
-    Slice _sliceWithSuffix(T element) const {
-        if (Cap() >= _len + 1) {
+    Slice _sliceWithSuffix() const { return *this; }
+
+    template <typename... Rem>
+    Slice _sliceWithSuffix(T element, Rem&&... rem) const {
+        if (Cap() >= _len + 1 + sizeof...(rem)) {
             _data[_len] = cpp::move(element);
-            return Slice(_data, _pos, _len + 1);
+            return Slice(_data, _pos, _len + 1)._sliceWithSuffix(cpp::forward<Rem>(rem)...);
         }
-        auto ret = Slice(_len + 1, _len * 2);
+        auto ret = Slice(_len + 1, _len + (_len >= 1 + sizeof...(rem) ? _len : (1 + sizeof...(rem))));
         Copy(ret, *this);
         ret[_len] = cpp::move(element);
-        return ret;
+        return ret._sliceWithSuffix(cpp::forward<Rem>(rem)...);
     }
 
 private:
     Slice(allocation<T> data, Int pos, Int len)
         : _data{data}, _pos{pos}, _len{len} {}
+
+    void _append() {}
+
+    template <typename... Rem>
+    void _append(T next, Rem&&... rem) {
+        _data[_len++] = cpp::move(next);
+        _append(cpp::forward<Rem>(rem)...);
+    }
 
     allocation<T> _data;
     Int _pos = 0;
@@ -317,5 +336,26 @@ public:
 private:
     Func<void()> _f;
 };
+
+template <typename T>
+String uitoa(T v) {
+    char buf[33] = {0};
+    auto i = sizeof(buf) - 2;
+    while (v >= 10) {
+        buf[i] = v%10 + '0';
+        --i;
+        v /= 10;
+    }
+    buf[i] = v + '0';
+    return buf + i;
+}
+
+template <typename T>
+String itoa(T v) {
+    if (v < 0) {
+        return "-" + uitoa(-v);
+    }
+    return uitoa(v);
+}
 
 } // namespace cx

@@ -12,6 +12,8 @@ using uint64_t = unsigned long long;
 using uintptr_t = uint64_t;
 using size_t = decltype(sizeof(int));
 
+static_assert(sizeof(int32_t) == 4, "");
+
 constexpr const uint64_t UINT64_MAX = uint64_t(-1);
 
 } // namespace cx::cpp

@@ -6,27 +6,6 @@
 
 namespace cx::fmt {
 
-template <typename T>
-static String uitoa(T v) {
-    char buf[33] = {0};
-    auto i = sizeof(buf) - 2;
-    while (v >= 10) {
-        buf[i] = v%10 + '0';
-        --i;
-        v /= 10;
-    }
-    buf[i] = v + '0';
-    return buf + i;
-}
-
-template <typename T>
-static String itoa(T v) {
-    if (v < 0) {
-        return "-" + uitoa(-v);
-    }
-    return uitoa(v);
-}
-
 template <typename T, typename = void>
 struct formatter {
     static String sprint(T arg) {

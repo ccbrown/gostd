@@ -5,6 +5,7 @@
 namespace cx::os {
 
 Error ErrExist = errors::New("file already exists");
+Error ErrNotExist = errors::New("file does not exist");
 
 Ptr<File> Stdin = New<File>(sys::unix::Stdin, "/dev/stdin");
 Ptr<File> Stdout = New<File>(sys::unix::Stdout, "/dev/stdout");

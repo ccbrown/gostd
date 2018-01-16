@@ -1578,6 +1578,43 @@ constexpr Errno EUSERS          = Errno(0x44);
 constexpr Errno EWOULDBLOCK     = Errno(0x23);
 constexpr Errno EXDEV           = Errno(0x12);
 
+enum : Int {
+    SIGABRT   = 0x6,
+    SIGALRM   = 0xe,
+    SIGBUS    = 0x7,
+    SIGCHLD   = 0x11,
+    SIGCLD    = 0x11,
+    SIGCONT   = 0x12,
+    SIGFPE    = 0x8,
+    SIGHUP    = 0x1,
+    SIGILL    = 0x4,
+    SIGINT    = 0x2,
+    SIGIO     = 0x1d,
+    SIGIOT    = 0x6,
+    SIGKILL   = 0x9,
+    SIGPIPE   = 0xd,
+    SIGPOLL   = 0x1d,
+    SIGPROF   = 0x1b,
+    SIGPWR    = 0x1e,
+    SIGQUIT   = 0x3,
+    SIGSEGV   = 0xb,
+    SIGSTKFLT = 0x10,
+    SIGSTOP   = 0x13,
+    SIGSYS    = 0x1f,
+    SIGTERM   = 0xf,
+    SIGTRAP   = 0x5,
+    SIGTSTP   = 0x14,
+    SIGTTIN   = 0x15,
+    SIGTTOU   = 0x16,
+    SIGURG    = 0x17,
+    SIGUSR1   = 0xa,
+    SIGUSR2   = 0xc,
+    SIGVTALRM = 0x1a,
+    SIGWINCH  = 0x1c,
+    SIGXCPU   = 0x18,
+    SIGXFSZ   = 0x19,
+};
+
 constexpr const char* errors[] = {
     "",
     "operation not permitted",

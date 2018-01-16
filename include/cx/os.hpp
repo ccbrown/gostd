@@ -7,7 +7,7 @@
 
 namespace cx::os {
 
-extern Error ErrExist;
+extern Error ErrExist, ErrNotExist;
 
 using FileMode = Uint32;
 
@@ -125,9 +125,23 @@ private:
 
 extern Ptr<File> Stdin, Stdout, Stderr;
 
+static Uint32 syscallMode(FileMode i) {
+    Uint32 o = i & ModePerm;
+    if (i & ModeSetuid) {
+        o |= sys::unix::S_ISUID;
+    }
+    if (i & ModeSetgid) {
+        o |= sys::unix::S_ISGID;
+    }
+    if (i & ModeSticky) {
+        o |= sys::unix::S_ISVTX;
+    }
+    return o;
+}
+
 static auto OpenFile(String name, Int flag, FileMode perm) {
     struct { Ptr<File> file; Error err; } ret;
-    auto [fd, err] = sys::unix::Open(name, flag|sys::unix::O_CLOEXEC, 0);
+    auto [fd, err] = sys::unix::Open(name, flag|sys::unix::O_CLOEXEC, syscallMode(perm));
     if (err) {
         ret.err = New<PathError>("open", name, err);
         return ret;
@@ -142,6 +156,10 @@ static auto Open(String name) {
 
 static auto Getenv(String key) {
     return sys::unix::Getenv(key);
+}
+
+static auto Environ() {
+    return sys::unix::Environ();
 }
 
 static String TempDir() {
@@ -172,6 +190,120 @@ static Error underlyingError(Error err) {
 static bool IsExist(Error err) {
     err = underlyingError(err);
     return err == sys::unix::EEXIST || err == sys::unix::ENOTEMPTY || err == ErrExist;
+}
+
+static bool IsNotExist(Error err) {
+    err = underlyingError(err);
+    return err == sys::unix::ENOENT || err == ErrNotExist;
+}
+
+struct ProcAttr {
+    Slice<String> Env;
+};
+
+class ProcessState {
+public:
+    ProcessState(Int pid, sys::unix::WaitStatus status, Ptr<sys::unix::Rusage> rusage)
+        : _pid{pid}, _status{status}, _rusage{rusage} {}
+
+    constexpr bool Success() const {
+        return _status.ExitStatus() == 0;
+    }
+
+    explicit operator String() const {
+        String ret;
+        if (_status.Exited()) {
+            ret = "exit status " + itoa(_status.ExitStatus());
+        } else {
+            // TODO
+            ret = "signaled, stopped, or continued";
+        }
+        if (_status.CoreDump()) {
+            ret = ret + " (core dumped)";
+        }
+        return ret;
+    }
+
+private:
+    Int _pid;
+    sys::unix::WaitStatus _status;
+    Ptr<sys::unix::Rusage> _rusage;
+};
+
+struct Process {
+    Int Pid = -1;
+
+    auto Wait() {
+        struct { Ptr<ProcessState> ps; Error err; } ret;
+        if (Pid == -1) {
+            ret.err = sys::unix::EINVAL;
+            return ret;
+        }
+
+        sys::unix::WaitStatus status;
+        auto rusage = New<sys::unix::Rusage>();
+        auto [pid, err] = sys::unix::Wait4(Pid, &status, 0, &*rusage);
+        if (err) {
+            ret.err = err;
+            return ret;
+        }
+        ret.ps = New<ProcessState>(pid, status, rusage);
+        return ret;
+    }
+};
+
+static auto StartProcess(String argv0, Slice<String> argv, ProcAttr* attr) {
+    struct { Ptr<Process> p; Error err; } ret;
+
+    if (auto [r1, r2, errno] = sys::unix::RawSyscall(sys::unix::SYS_FORK, 0, 0, 0); errno != 0) {
+        ret.err = errno;
+        return ret;
+    } else if (r2 == 0) {
+        ret.p = New<Process>();
+        ret.p->Pid = r1;
+        return ret;
+    }
+
+    // TODO: lots of stuff to add here
+
+    sys::unix::Exec(argv0, argv, attr->Env);
+
+    while (true) {
+        sys::unix::RawSyscall(sys::unix::SYS_EXIT, 253, 0, 0);
+    }
+}
+
+static auto Create(String name) {
+    return OpenFile(name, O_RDWR|O_CREATE|O_TRUNC, 0666);
+}
+
+static auto Chmod(String name, FileMode mode) {
+    return sys::unix::Chmod(name, mode);
+}
+
+static Error Mkdir(String name, FileMode perm) {
+    if (auto err = sys::unix::Mkdir(name, syscallMode(perm)); err) {
+        return New<PathError>("mkdir", name, err);
+    }
+    return {};
+}
+
+struct FileInfo {
+    constexpr bool IsDir() const { return mode & ModeDir; }
+
+    FileMode mode;
+};
+
+static auto Lstat(String name) {
+    struct { FileInfo fi; Error err; } ret;
+    sys::unix::Stat_t stat;
+    if (auto err = sys::unix::Lstat(name, &stat); err) {
+        ret.err = New<PathError>("lstat", name, err);
+        return ret;
+    }
+
+    ret.fi.mode = (stat.Mode & 0777);
+    return ret;
 }
 
 } // namespace cx::os

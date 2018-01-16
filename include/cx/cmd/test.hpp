@@ -4,6 +4,7 @@
 #include <cx/fmt.hpp>
 #include <cx/io/ioutil.hpp>
 #include <cx/os.hpp>
+#include <cx/os/exec.hpp>
 #include <cx/strconv.hpp>
 #include <cx/strings.hpp>
 #include <cx/archive/ar.hpp>
@@ -152,11 +153,26 @@ static auto findTestsInArchive(String path) {
 }
 
 static Error writeMainCPP(io::Writer w, Slice<Test> tests) {
-    auto [_, err] = w.Write(Slice<Byte>("int main() { return 7; }"));
-    return err;
+    for (Int i = 0; i < tests.Len(); ++i) {
+        if (auto [_, err] = w.Write(Slice<Byte>("extern \"C\" void(*" + tests[i].Symbol.Tail(1) + ")(void*);\n")); err) {
+            return err;
+        }
+    }
+    if (auto [_, err] = w.Write(Slice<Byte>("int main() {\n")); err) {
+        return err;
+    }
+    for (Int i = 0; i < tests.Len(); ++i) {
+        if (auto [_, err] = w.Write(Slice<Byte>(tests[i].Symbol.Tail(1) + "(0);\n")); err) {
+            return err;
+        }
+    }
+    if (auto [_, err] = w.Write(Slice<Byte>("return 7;\n}\n")); err) {
+        return err;
+    }
+    return {};
 }
 
-static Error compileExecutable(String archive) {
+static Error compileExecutable(String output, String archive) {
     auto [tests, err] = findTestsInArchive(archive);
     if (err) {
         return err;
@@ -165,36 +181,72 @@ static Error compileExecutable(String archive) {
         return errors::New("no tests found");
     }
 
-    auto [f, err2] = io::ioutil::TempFile();
+    auto [tmp, err2] = io::ioutil::TempDir();
     if (err2) {
         return err2;
     }
-    Defer x([f=f] {
-        f->Close();
-        os::Remove(f->Name());
+
+    auto mainCPP = path::filepath::Join(tmp, "main.cpp");
+
+    Defer x([mainCPP=mainCPP, tmp=tmp] {
+        os::Remove(mainCPP);
+        os::Remove(tmp);
     });
 
+    auto [f, err3] = os::Create(mainCPP);
+    if (err3) {
+        return err3;
+    }
     if (auto err = writeMainCPP(f, tests); err) {
+        f->Close();
+        return err;
+    }
+    f->Close();
+
+    if (auto err = os::exec::Command("/usr/bin/c++", f->Name(), archive, "-o", output)->Run(); err) {
         return err;
     }
 
-    // TODO: compile
     return {};
 }
 
-static int test(String path) {
-    if (auto err = compileExecutable(path); err) {
-        fmt::Fprintln(os::Stderr, err);
-        return 1;
+static Error test(String path) {
+    auto [tmp, err] = io::ioutil::TempDir();
+    if (err) {
+        return err;
     }
-    return 0;
+
+    auto testEXE = path::filepath::Join(tmp, "test");
+
+    Defer x([testEXE=testEXE, tmp=tmp] {
+        os::Remove(testEXE);
+        os::Remove(tmp);
+    });
+
+    if (auto err = compileExecutable(testEXE, path); err) {
+        return err;
+    }
+
+    if (auto err = os::exec::Command(testEXE)->Run(); err) {
+        return err;
+    }
+
+    return {};
 }
 
 static int Run(Slice<String> args) {
     if (args.Len() >= 1) {
-        for (Int i = 0; i < args.Len(); ++i) {
-            if (auto ret = test(args[i]); ret != 0) {
-                return ret;
+        if (args.Len() == 2 && args[0] == "-c") {
+            if (auto err = compileExecutable("libcx.test", args[1]); err) {
+                fmt::Fprintln(os::Stderr, err);
+                return 1;
+            }
+        } else {
+            for (Int i = 0; i < args.Len(); ++i) {
+                if (auto err = test(args[i]); err) {
+                    fmt::Fprintln(os::Stderr, err);
+                    return 1;
+                }
             }
         }
         return 0;

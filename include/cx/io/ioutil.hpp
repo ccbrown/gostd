@@ -26,6 +26,27 @@ static auto ReadAll(Reader r) {
     return ret;
 }
 
+static auto TempDir(String dir = "", String prefix = "") {
+    struct { String name; Error err; } ret;
+
+    if (dir == "") {
+        dir = os::TempDir();
+    }
+
+    for (int i = 0; i < 10000; i++) {
+        auto name = path::filepath::Join(dir, prefix+nextSuffix());
+        auto err = os::Mkdir(name, 0700);
+        if (os::IsExist(err)) {
+            continue;
+        }
+        ret.name = name;
+        ret.err = err;
+        break;
+    }
+
+    return ret;
+}
+
 static auto TempFile(String dir = "", String prefix = "") {
     struct { Ptr<os::File> f; Error err; } ret;
 
