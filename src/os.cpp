@@ -1,8 +1,8 @@
-#include <cx/os.hpp>
+#include <gostd/os.hpp>
 
-#include <cx/errors.hpp>
+#include <gostd/errors.hpp>
 
-namespace cx::os {
+namespace gostd::os {
 
 Error ErrExist = errors::New("file already exists");
 Error ErrNotExist = errors::New("file does not exist");
@@ -12,4 +12,4 @@ Ptr<File> Stdout = New<File>(sys::unix::Stdout, "/dev/stdout");
 Ptr<File> Stderr = New<File>(sys::unix::Stderr, "/dev/stderr");
 
 
-} // namespace cx::os
+} // namespace gostd::os

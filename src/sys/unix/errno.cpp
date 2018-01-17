@@ -1,8 +1,8 @@
-#include <cx/sys/unix/errno.hpp>
+#include <gostd/sys/unix/errno.hpp>
 
-#include <cx/sys/unix/zerrors_darwin_amd64.hpp>
+#include <gostd/sys/unix/zerrors_darwin_amd64.hpp>
 
-namespace cx::sys::unix {
+namespace gostd::sys::unix {
 
 String Errno::Error() const {
     auto errno = Int(_errno);
@@ -13,4 +13,4 @@ String Errno::Error() const {
 }
 
 
-} // namespace cx::sys::unix
+} // namespace gostd::sys::unix

@@ -1,6 +1,6 @@
-#include <cx/io.hpp>
+#include <gostd/io.hpp>
 
-namespace cx::io::ioutil {
+namespace gostd::io::ioutil {
 
 Uint32 suffixN = 0;
 
@@ -12,4 +12,4 @@ struct devNull {
 
 Writer Discard = New<devNull>();
 
-} // namespace cx::io::ioutil
+} // namespace gostd::io::ioutil

@@ -1,7 +1,7 @@
-#include <cx/fmt.hpp>
-#include <cx/testing.hpp>
+#include <gostd/fmt.hpp>
+#include <gostd/testing.hpp>
 
-namespace cx::fmt {
+namespace gostd::fmt {
 
 void TestSprint(testing::T* t) {
     fmt::Println("foo!");
@@ -11,4 +11,4 @@ void TestFprint(testing::T* t) {
     fmt::Println("bar!");
 }
 
-} // namespace cx::fmt
+} // namespace gostd::fmt

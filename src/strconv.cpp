@@ -1,8 +1,8 @@
-#include <cx/errors.hpp>
+#include <gostd/errors.hpp>
 
-namespace cx::strconv {
+namespace gostd::strconv {
 
 Error ErrSyntax = errors::New("invalid syntax");
 Error ErrRange = errors::New("value out of range");
 
-} //namespace cx::strconv
+} //namespace gostd::strconv

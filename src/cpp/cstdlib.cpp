@@ -1,16 +1,16 @@
-#include <cx/cpp.hpp>
+#include <gostd/cpp.hpp>
 
-#include <cx/sys/unix/asm_darwin_amd64.hpp>
-#include <cx/sys/unix/zerrors_darwin_amd64.hpp>
-#include <cx/sys/unix/zsysnum_darwin_amd64.hpp>
+#include <gostd/sys/unix/asm_darwin_amd64.hpp>
+#include <gostd/sys/unix/zerrors_darwin_amd64.hpp>
+#include <gostd/sys/unix/zsysnum_darwin_amd64.hpp>
 
-void* operator new(cx::cpp::size_t size, cx::cpp::placement placement) {
+void* operator new(gostd::cpp::size_t size, gostd::cpp::placement placement) {
     return placement.ptr;
 }
 
-void operator delete(void* ptr, cx::cpp::placement placement) {}
+void operator delete(void* ptr, gostd::cpp::placement placement) {}
 
-namespace cx::cpp {
+namespace gostd::cpp {
 
 using namespace sys;
 
@@ -42,4 +42,4 @@ void free(void* ptr) {
     }
 }
 
-} // namespace cx::cpp
+} // namespace gostd::cpp

@@ -10,7 +10,7 @@ DEPS := $(patsubst $(SRCDIR)/%.cpp,$(OBJDIR)/%.d,$(SRCS))
 
 NODEPS := clean
 
-all: cx libcx.a
+all: gostd libgostd.a
 
 ifeq (0, $(words $(findstring $(MAKECMDGOALS), $(NODEPS))))
 -include $(DEPS)
@@ -20,12 +20,12 @@ $(OBJDIR)/%.o: $(SRCDIR)/%.cpp
 	@mkdir -p $(dir $@)
 	$(CXX) $(CXXFLAGS) -c $< -o $@ -MD -MT '$@' -MF '$(patsubst $(OBJDIR)/%.o,$(OBJDIR)/%.d,$@)'
 
-libcx.a: $(OBJS)
+libgostd.a: $(OBJS)
 	ar rsc $@ $(OBJS)
 
-cx: libcx.a
-	$(CXX) libcx.a -o $@ $(LDFLAGS)
+gostd: libgostd.a
+	$(CXX) libgostd.a -o $@ $(LDFLAGS)
 
 clean:
 	rm -rf $(OBJDIR)
-	rm -rf cx libcx.a
+	rm -rf gostd libgostd.a

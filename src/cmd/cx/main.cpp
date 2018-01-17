@@ -1,11 +1,11 @@
-#include <cx/cmd/ar.hpp>
-#include <cx/cmd/nm.hpp>
-#include <cx/cmd/test.hpp>
-#include <cx/fmt.hpp>
-#include <cx/os.hpp>
-#include <cx/strconv.hpp>
+#include <gostd/cmd/ar.hpp>
+#include <gostd/cmd/nm.hpp>
+#include <gostd/cmd/test.hpp>
+#include <gostd/fmt.hpp>
+#include <gostd/os.hpp>
+#include <gostd/strconv.hpp>
 
-using namespace cx;
+using namespace gostd;
 
 int main(int argc, const char* argv[]) {
     Slice<String> args(argc);
@@ -13,11 +13,11 @@ int main(int argc, const char* argv[]) {
         args[i] = argv[i];
     }
 
-    if (argc > 1 && cx::String(argv[1]) == "ar") {
+    if (argc > 1 && gostd::String(argv[1]) == "ar") {
         return cmd::ar::Run(args.Tail(2));
-    } else if (argc > 1 && cx::String(argv[1]) == "nm") {
+    } else if (argc > 1 && gostd::String(argv[1]) == "nm") {
         return cmd::nm::Run(args.Tail(2));
-    } else if (argc > 1 && cx::String(argv[1]) == "test") {
+    } else if (argc > 1 && gostd::String(argv[1]) == "test") {
         return cmd::test::Run(args.Tail(2));
     }
 

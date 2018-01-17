@@ -1,12 +1,12 @@
-# cx
+# gostd
 
 This is a toy project where I attempt to rewrite Go packages in C++ from scratch (without using the C++ standard library):
 
 ```c++
-#include <cx/fmt.hpp>
-#include <cx/os.hpp>
+#include <gostd/fmt.hpp>
+#include <gostd/os.hpp>
 
-using namespace cx;
+using namespace gostd;
 
 int main() {
     auto [n, err] = fmt::Println("hello, world!");

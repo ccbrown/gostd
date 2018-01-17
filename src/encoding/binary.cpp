@@ -1,8 +1,8 @@
-#include <cx/encoding/binary.hpp>
+#include <gostd/encoding/binary.hpp>
 
-namespace cx::encoding::binary {
+namespace gostd::encoding::binary {
 
 bigEndian BigEndian;
 littleEndian LittleEndian;
 
-} // namespace cx::encoding::binary
+} // namespace gostd::encoding::binary

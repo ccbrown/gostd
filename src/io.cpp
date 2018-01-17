@@ -1,9 +1,9 @@
-#include <cx/errors.hpp>
+#include <gostd/errors.hpp>
 
-namespace cx::io {
+namespace gostd::io {
 
 Error ErrShortBuffer = errors::New("short buffer");
 Error ErrShortWrite = errors::New("short write");
 Error EOF = errors::New("EOF");
 
-} // namespace cx::io
+} // namespace gostd::io
