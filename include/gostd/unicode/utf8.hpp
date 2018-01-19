@@ -1,7 +1,4 @@
+// THIS FILE WAS GENERATED VIA TRANSPILING. DO NOT MODIFY.
 #pragma once
 
-namespace gostd::unicode::utf8 {
-
-constexpr const Rune RuneSelf = 0x80;
-
-} // namespace gostd::unicode::utf8
+#include <gostd/unicode/utf8/_utf8.hpp>
