@@ -4,8 +4,7 @@
 namespace gostd::fmt {
 
 void TestSprint(testing::T* t) {
-    auto s = Sprint(-123);
-    if (s != "-123") {
+    if (auto s = Sprint(-123); s != "-123") {
         t->Fatal("expected -123, got", s);
     }
 }
