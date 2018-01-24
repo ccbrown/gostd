@@ -25,11 +25,11 @@ static auto numericPrefix(String s) {
     struct { Int n = -1; String suffix; } ret;
     Int i = 0;
     while (s[i] >= '0' && s[i] <= '9') {
-        ++i;
+        i++;
     }
     if (i > 0) {
         if (auto [n, err] = strconv::ParseInt(s.Head(i), 10, 32); !err) {
-            ret.n = n;
+            ret.n = Int(n);
             ret.suffix = s.Tail(i);
         }
     }
@@ -119,7 +119,7 @@ static auto findTestsInObject(io::Reader r) {
         return ret;
     }
     if (macho->Symtab) {
-        for (Int i = 0; i < macho->Symtab->Syms.Len(); ++i) {
+        for (Int i = 0; i < macho->Symtab->Syms.Len(); i++) {
             if (auto [test, ok] = parseSymbol(macho->Symtab->Syms[i].Name); ok) {
                 ret.tests = Append(ret.tests, test);
             }
@@ -153,20 +153,53 @@ static auto findTestsInArchive(String path) {
 }
 
 static Error writeMainCPP(io::Writer w, Slice<Test> tests) {
-    for (Int i = 0; i < tests.Len(); ++i) {
-        if (auto [_, err] = w.Write(Slice<Byte>("extern \"C\" void(*" + tests[i].Symbol.Tail(1) + ")(void*);\n")); err) {
-            return err;
+    if (auto [_, err] = w.Write(Slice<Byte>(R"cpp(
+        namespace gostd {
+            namespace testing {
+                class T;
+            }
         }
-    }
-    if (auto [_, err] = w.Write(Slice<Byte>("int main() {\n")); err) {
+    )cpp")); err) {
         return err;
     }
-    for (Int i = 0; i < tests.Len(); ++i) {
-        if (auto [_, err] = w.Write(Slice<Byte>(tests[i].Symbol.Tail(1) + "(0);\n")); err) {
+    for (Int i = 0; i < tests.Len(); i++) {
+        auto ns = strings::TrimRightFunc(tests[i].Name, [](Rune r) { return r != ':'; });
+        if (ns != "") {
+            ns = ns.Head(Len(ns) - 2);
+        }
+        auto name = ns == "" ? tests[i].Name : tests[i].Name.Tail(Len(ns) + 2);
+        if (auto [_, err] = w.Write(Slice<Byte>("namespace " + ns + " { void " + name + "(::gostd::testing::T*); }\n")); err) {
             return err;
         }
     }
-    if (auto [_, err] = w.Write(Slice<Byte>("return 7;\n}\n")); err) {
+    if (auto [_, err] = w.Write(Slice<Byte>(R"cpp(
+        namespace gostd {
+            namespace testing {
+                int testMain(int, const char*[]);
+                void(*testFunctions[])(T*) = {
+    )cpp")); err) {
+        return err;
+    }
+    for (Int i = 0; i < tests.Len(); i++) {
+        if (auto [_, err] = w.Write(Slice<Byte>("&" + tests[i].Name + ",\n")); err) {
+            return err;
+        }
+    }
+    if (auto [_, err] = w.Write(Slice<Byte>(R"cpp(
+                0};
+                const char* testNames[] = {
+    )cpp")); err) {
+        return err;
+    }
+    for (Int i = 0; i < tests.Len(); i++) {
+        if (auto [_, err] = w.Write(Slice<Byte>("\"" + tests[i].Name + "\",\n")); err) {
+            return err;
+        }
+    }
+    if (auto [_, err] = w.Write(Slice<Byte>("0};\n}}\n")); err) {
+        return err;
+    }
+    if (auto [_, err] = w.Write(Slice<Byte>("int main(int argc, const char* argv[]) { return ::gostd::testing::testMain(argc, argv); }\n")); err) {
         return err;
     }
     return {};
@@ -203,7 +236,7 @@ static Error compileExecutable(String output, String archive) {
     }
     f->Close();
 
-    if (auto err = os::exec::Command("/usr/bin/c++", f->Name(), archive, "-o", output)->Run(); err) {
+    if (auto err = os::exec::Command("/usr/bin/c++", "-std=c++1z", f->Name(), archive, "-o", output)->Run(); err) {
         return err;
     }
 
@@ -242,7 +275,7 @@ static int Run(Slice<String> args) {
                 return 1;
             }
         } else {
-            for (Int i = 0; i < args.Len(); ++i) {
+            for (Int i = 0; i < args.Len(); i++) {
                 if (auto err = test(args[i]); err) {
                     fmt::Fprintln(os::Stderr, err);
                     return 1;

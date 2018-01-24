@@ -2,14 +2,15 @@
 
 namespace gostd::debug::macho {
 
-enum class Cpu : Uint32 {};
-enum class Type : Uint32 {};
+struct cpu {};
+using Cpu = Uint32::Type<cpu>;
 
-enum : Uint32 {
-    Magic32  = 0xfeedface,
-    Magic64  = 0xfeedfacf,
-    MagicFat = 0xcafebabe,
-};
+struct type {};
+using Type = Uint32::Type<type>;
+
+constexpr auto Magic32  = UntypedConstant(0xfeedface);
+constexpr auto Magic64  = UntypedConstant(0xfeedfacf);
+constexpr auto MagicFat = UntypedConstant(0xcafebabe);
 
 struct FileHeader {
     Uint32 Magic;
@@ -21,10 +22,11 @@ struct FileHeader {
     Uint32 Flags;
 };
 
-constexpr Int fileHeaderSize32 = 7 * 4;
-constexpr Int fileHeaderSize64 = 8 * 4;
+constexpr auto fileHeaderSize32 = UntypedConstant(7 * 4);
+constexpr auto fileHeaderSize64 = UntypedConstant(8 * 4);
 
-enum class LoadCmd : Uint32 {};
+struct loadCmd {};
+using LoadCmd = Uint32::Type<loadCmd>;
 
 constexpr LoadCmd LoadCmdSegment    = LoadCmd(1);
 constexpr LoadCmd LoadCmdSymtab     = LoadCmd(2);

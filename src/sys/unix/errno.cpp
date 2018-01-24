@@ -7,7 +7,7 @@ namespace gostd::sys::unix {
 String Errno::Error() const {
     auto errno = Int(_errno);
     if (errno > 0 && errno <= sizeof(errors) / sizeof(*errors)) {
-        return errors[errno];
+        return errors[errno.value()];
     }
     return "errno " + itoa(errno);
 }

@@ -1,6 +1,7 @@
 #pragma once
 
 #include <gostd/cpp.hpp>
+#include <gostd/_numeric_types.hpp>
 
 namespace gostd {
 
@@ -10,8 +11,8 @@ public:
     constexpr allocation() : _block{nullptr} {}
 
     template <typename... Args>
-    explicit allocation(cpp::uint64_t count, Args... args)
-        : _block{reinterpret_cast<block*>(cpp::malloc(sizeof(block)+sizeof(T)*count))}
+    explicit allocation(Uint64 count, Args... args)
+        : _block{reinterpret_cast<block*>(cpp::malloc(sizeof(block)+sizeof(T)*cpp::size_t(count)))}
     {
         for (cpp::uint64_t i = 0; i < count; ++i) {
             new(cpp::placement{_block->data + i}) T(args...);
@@ -37,9 +38,9 @@ public:
 
     constexpr operator bool() const { return _block; }
 
-    constexpr T& operator[](int i) const { return _block->data[i]; }
+    constexpr T& operator[](Int i) const { return _block->data[i.value()]; }
 
-    constexpr const cpp::size_t count() const {
+    constexpr const Uint64 count() const {
         if (!_block) { return 0; }
         return (cpp::malloc_size(_block) - sizeof(block)) / sizeof(T);
     }

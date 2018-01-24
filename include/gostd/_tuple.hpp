@@ -7,19 +7,19 @@ class Tuple {
 public:
     constexpr Tuple(First first, Rem... rem) : _element{cpp::move(first)}, _remaining{cpp::move(rem)...} {}
 
-    static constexpr Int Size = 1 + sizeof...(Rem);
+    static constexpr int Size = 1 + sizeof...(Rem);
 
-    template <Int I>
+    template <int I>
     using Type = typename cpp::conditional<I == 0, First, typename Tuple<Rem...>::template Type<I - 1>>::type;
 
-    template <Int I>
-    constexpr auto Get() { return _get(cpp::integral_constant<Int, I>{}); }
+    template <int I>
+    constexpr auto Get() { return _get(cpp::integral_constant<int, I>{}); }
 
 private:
     First _element;
     Tuple<Rem...> _remaining;
 
-    constexpr auto _get(cpp::integral_constant<Int, 0> i) { return _element; }
+    constexpr auto _get(cpp::integral_constant<int, 0> i) { return _element; }
 
     template <typename I>
     constexpr auto _get(I i) { return _remaining.template Get<I::value - 1>(); }
@@ -30,12 +30,12 @@ class Tuple<T> {
 public:
     explicit Tuple(T element) : _element{cpp::move(element)} {}
 
-    static constexpr Int Size = 1;
+    static constexpr int Size = 1;
 
-    template <Int i>
+    template <int i>
     using Type = T;
 
-    template <Int I>
+    template <int I>
     constexpr auto Get() {
         static_assert(I == 0, "index out of bounds");
         return _element;

@@ -1,12 +1,13 @@
 #pragma once
 
 #include <gostd.hpp>
+#include <gostd/cpp.hpp>
 
 namespace gostd::sys::unix {
 
-static auto syscall6(UintPtr trap, UintPtr a1, UintPtr a2, UintPtr a3, UintPtr a4, UintPtr a5, UintPtr a6) {
+static auto syscall6(cpp::uintptr_t trap, cpp::uintptr_t a1, cpp::uintptr_t a2, cpp::uintptr_t a3, cpp::uintptr_t a4, cpp::uintptr_t a5, cpp::uintptr_t a6) {
     struct {
-        unsigned long long r1, r2, errno;
+        cpp::uintptr_t r1, r2, errno;
     } ret;
     asm(
         "movq %3, %%rax;"

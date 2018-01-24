@@ -13,7 +13,7 @@ static String Quote(String s) {
     for (Int i = 0; i < s.Len(); i++) {
         auto c = s[i];
         if (c == '\n' || c == '\t' || c == '\r' || c == '\\' || c == '"') {
-            ++quotedLength;
+            quotedLength++;
         } else if (c < ' ' || c > '~') {
             quotedLength += 3;
         }
@@ -36,8 +36,8 @@ static String Quote(String s) {
         } else if (c < ' ' || c > '~') {
             buf[dest++] = '\\';
             buf[dest++] = 'x';
-            buf[dest++] = digits[c >> 4];
-            buf[dest++] = digits[c & 0xf];
+            buf[dest++] = digits[(c >> 4).value()];
+            buf[dest++] = digits[(c & 0xf).value()];
         } else {
             buf[dest++] = c;
         }
@@ -55,11 +55,11 @@ static String FormatInt(Int64 i, Int base) {
         i = -i;
     }
     auto pos = sizeof(buf) - 2;
-    while (i >= base) {
-        buf[pos--] = digits[i % base];
-        i /= base;
+    while (i >= Int64(base)) {
+        buf[pos--] = digits[(i % Int64(base)).value()];
+        i /= Int64(base);
     }
-    buf[pos] = digits[i];
+    buf[pos] = digits[i.value()];
     if (neg) {
         buf[--pos] = '-';
     }
@@ -101,7 +101,7 @@ static auto ParseUint(String s, Int base, Int bitSize) {
         base = 10;
     }
 
-    auto cutoff = cpp::UINT64_MAX / base + 1;
+    auto cutoff = cpp::UINT64_MAX / Uint64(base) + 1;
     auto maxVal = (Uint64(1) << bitSize) - 1;
     if (bitSize == 64) {
         maxVal = -1;
@@ -116,16 +116,16 @@ static auto ParseUint(String s, Int base, Int bitSize) {
         bitSize = sizeof(Int) * 8;
     }
 
-    for (Int i = 0; i < s.Len(); ++i) {
+    for (Int i = 0; i < s.Len(); i++) {
         auto c = s[i];
 
         auto v = base;
         if (c >= '0' && c <= '9') {
-            v = c - '0';
+            v = Int(c - '0');
         } else if (c >= 'a' && c <= 'z') {
-            v = 10 + c - 'a';
+            v = Int(10 + c - 'a');
         } else if (c >= 'A' && c <= 'Z') {
-            v = 10 + c - 'A';
+            v = Int(10 + c - 'A');
         }
 
         if (v >= base) {
@@ -138,9 +138,9 @@ static auto ParseUint(String s, Int base, Int bitSize) {
             ret.err = ErrRange;
             goto Error;
         }
-        ret.n *= base;
+        ret.n *= Uint64(base);
 
-        auto n2 = ret.n + v;
+        auto n2 = ret.n + Uint64(v);
         if (n2 < ret.n || n2 > maxVal) {
             ret.n = cpp::UINT64_MAX;
             ret.err = ErrRange;
@@ -185,13 +185,13 @@ static auto ParseInt(String s, Int base, Int bitSize) {
 
     auto cutoff = Uint64(1) << (bitSize - 1);
     if (!neg && un >= cutoff) {
-        ret.n = cutoff - 1;
+        ret.n = Int64(cutoff - 1);
         ret.err = New<NumError>("ParseInt", s0, ErrRange);
     } else if (neg && un > cutoff) {
         ret.n = -Int64(cutoff);
         ret.err = New<NumError>("ParseInt", s0, ErrRange);
     } else {
-        ret.n = un;
+        ret.n = Int64(un);
         if (neg) {
             ret.n = -ret.n;
         }

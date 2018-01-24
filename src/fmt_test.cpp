@@ -4,11 +4,10 @@
 namespace gostd::fmt {
 
 void TestSprint(testing::T* t) {
-    fmt::Println("foo!");
-}
-
-void TestFprint(testing::T* t) {
-    fmt::Println("bar!");
+    auto s = Sprint(-123);
+    if (s != "-123") {
+        t->Fatal("expected -123, got", s);
+    }
 }
 
 } // namespace gostd::fmt

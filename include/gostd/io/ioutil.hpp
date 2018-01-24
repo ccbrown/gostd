@@ -14,7 +14,8 @@ extern Uint32 suffixN;
 
 static String nextSuffix() {
     // TODO: randomize
-    return strconv::Itoa(suffixN++);
+    suffixN++;
+    return strconv::Itoa(Int(suffixN-1));
 }
 
 static auto ReadAll(Reader r) {

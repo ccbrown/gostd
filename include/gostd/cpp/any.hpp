@@ -15,7 +15,7 @@ class any {
 public:
     constexpr any() {}
     any(const any& other) = default;
-    any(any&& other) noexcept = default;
+    any(any&& other) = default;
     any& operator=(const any& other) = default;
     any& operator=(any&& other) = default;
 

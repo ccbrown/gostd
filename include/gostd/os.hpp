@@ -9,37 +9,33 @@ namespace gostd::os {
 
 extern Error ErrExist, ErrNotExist;
 
-using FileMode = Uint32;
+struct fileMode {};
+using FileMode = Uint32::Type<fileMode>;
 
-enum : FileMode {
-	ModeDir        = 1ul << 31,
-  	ModeAppend     = 1ul << 30,
-  	ModeExclusive  = 1ul << 29,
-  	ModeTemporary  = 1ul << 28,
-  	ModeSymlink    = 1ul << 27,
-  	ModeDevice     = 1ul << 26,
-  	ModeNamedPipe  = 1ul << 25,
-  	ModeSocket     = 1ul << 24,
-  	ModeSetuid     = 1ul << 23,
-  	ModeSetgid     = 1ul << 22,
-  	ModeCharDevice = 1ul << 21,
-  	ModeSticky     = 1ul << 20,
+constexpr auto ModeDir        = FileMode(1ul << 31);
+constexpr auto ModeAppend     = FileMode(1ul << 30);
+constexpr auto ModeExclusive  = FileMode(1ul << 29);
+constexpr auto ModeTemporary  = FileMode(1ul << 28);
+constexpr auto ModeSymlink    = FileMode(1ul << 27);
+constexpr auto ModeDevice     = FileMode(1ul << 26);
+constexpr auto ModeNamedPipe  = FileMode(1ul << 25);
+constexpr auto ModeSocket     = FileMode(1ul << 24);
+constexpr auto ModeSetuid     = FileMode(1ul << 23);
+constexpr auto ModeSetgid     = FileMode(1ul << 22);
+constexpr auto ModeCharDevice = FileMode(1ul << 21);
+constexpr auto ModeSticky     = FileMode(1ul << 20);
 
-  	ModeType = ModeDir | ModeSymlink | ModeNamedPipe | ModeSocket | ModeDevice,
+constexpr auto ModeType = ModeDir | ModeSymlink | ModeNamedPipe | ModeSocket | ModeDevice;
+constexpr auto ModePerm = FileMode(0777);
 
-  	ModePerm = 0777
-};
-
-enum : Int {
-  	O_RDONLY = sys::unix::O_RDONLY,
-  	O_WRONLY = sys::unix::O_WRONLY,
-  	O_RDWR   = sys::unix::O_RDWR,
-  	O_APPEND = sys::unix::O_APPEND,
-  	O_CREATE = sys::unix::O_CREAT,
-  	O_EXCL   = sys::unix::O_EXCL,
-  	O_SYNC   = sys::unix::O_SYNC,
-  	O_TRUNC  = sys::unix::O_TRUNC,
-};
+constexpr auto O_RDONLY = sys::unix::O_RDONLY;
+constexpr auto O_WRONLY = sys::unix::O_WRONLY;
+constexpr auto O_RDWR   = sys::unix::O_RDWR;
+constexpr auto O_APPEND = sys::unix::O_APPEND;
+constexpr auto O_CREATE = sys::unix::O_CREAT;
+constexpr auto O_EXCL   = sys::unix::O_EXCL;
+constexpr auto O_SYNC   = sys::unix::O_SYNC;
+constexpr auto O_TRUNC  = sys::unix::O_TRUNC;
 
 struct PathError {
     PathError(String op, String path, Error err) : Op{op}, Path{path}, Err{err} {}
@@ -55,15 +51,15 @@ struct PathError {
 
 class File {
 public:
-    File(UintPtr fd, String name) : _fd{fd}, _name{name} {}
+    File(UintPtr fd, String name) : _fd{Int(fd)}, _name{name} {}
     ~File() {
         Close();
     }
 
     Error Close() {
-        if (_fd != UintPtr(-1)) {
+        if (_fd != -1) {
             sys::unix::Close(_fd);
-            _fd = UintPtr(-1);
+            _fd = -1;
         }
         return {};
     }
@@ -112,7 +108,7 @@ public:
     auto Name() const { return _name; }
 
 private:
-    UintPtr _fd;
+    Int _fd;
     const String _name;
 
     Error _wrapErr(String op, Error err) const {
@@ -126,7 +122,7 @@ private:
 extern Ptr<File> Stdin, Stdout, Stderr;
 
 static Uint32 syscallMode(FileMode i) {
-    Uint32 o = i & ModePerm;
+    auto o = Uint32(i & ModePerm);
     if (i & ModeSetuid) {
         o |= sys::unix::S_ISUID;
     }
@@ -146,7 +142,7 @@ static auto OpenFile(String name, Int flag, FileMode perm) {
         ret.err = New<PathError>("open", name, err);
         return ret;
     }
-    ret.file = New<File>(fd, name);
+    ret.file = New<File>(UintPtr(fd), name);
     return ret;
 }
 
@@ -260,7 +256,7 @@ static auto StartProcess(String argv0, Slice<String> argv, ProcAttr* attr) {
         return ret;
     } else if (r2 == 0) {
         ret.p = New<Process>();
-        ret.p->Pid = r1;
+        ret.p->Pid = Int(r1);
         return ret;
     }
 
@@ -278,7 +274,7 @@ static auto Create(String name) {
 }
 
 static auto Chmod(String name, FileMode mode) {
-    return sys::unix::Chmod(name, mode);
+    return sys::unix::Chmod(name, syscallMode(mode));
 }
 
 static Error Mkdir(String name, FileMode perm) {
@@ -289,7 +285,7 @@ static Error Mkdir(String name, FileMode perm) {
 }
 
 struct FileInfo {
-    constexpr bool IsDir() const { return mode & ModeDir; }
+    constexpr bool IsDir() const { return (mode & ModeDir) != 0; }
 
     FileMode mode;
 };
@@ -302,7 +298,7 @@ static auto Lstat(String name) {
         return ret;
     }
 
-    ret.fi.mode = (stat.Mode & 0777);
+    ret.fi.mode = FileMode(stat.Mode & 0777);
     return ret;
 }
 

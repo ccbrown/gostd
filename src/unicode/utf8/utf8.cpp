@@ -6,9 +6,9 @@
 
 namespace gostd::unicode::utf8 {
 
-::gostd::Array<::gostd::Uint8, 256> first = {as, as, as, as, as, as, as, as, as, as, as, as, as, as, as, as, as, as, as, as, as, as, as, as, as, as, as, as, as, as, as, as, as, as, as, as, as, as, as, as, as, as, as, as, as, as, as, as, as, as, as, as, as, as, as, as, as, as, as, as, as, as, as, as, as, as, as, as, as, as, as, as, as, as, as, as, as, as, as, as, as, as, as, as, as, as, as, as, as, as, as, as, as, as, as, as, as, as, as, as, as, as, as, as, as, as, as, as, as, as, as, as, as, as, as, as, as, as, as, as, as, as, as, as, as, as, as, as, xx, xx, xx, xx, xx, xx, xx, xx, xx, xx, xx, xx, xx, xx, xx, xx, xx, xx, xx, xx, xx, xx, xx, xx, xx, xx, xx, xx, xx, xx, xx, xx, xx, xx, xx, xx, xx, xx, xx, xx, xx, xx, xx, xx, xx, xx, xx, xx, xx, xx, xx, xx, xx, xx, xx, xx, xx, xx, xx, xx, xx, xx, xx, xx, xx, xx, s1, s1, s1, s1, s1, s1, s1, s1, s1, s1, s1, s1, s1, s1, s1, s1, s1, s1, s1, s1, s1, s1, s1, s1, s1, s1, s1, s1, s1, s1, s2, s3, s3, s3, s3, s3, s3, s3, s3, s3, s3, s3, s3, s4, s3, s3, s5, s6, s6, s6, s7, xx, xx, xx, xx, xx, xx, xx, xx, xx, xx, xx};
+::gostd::Array<::gostd::Uint8, 256> first = {::gostd::Uint8(as), ::gostd::Uint8(as), ::gostd::Uint8(as), ::gostd::Uint8(as), ::gostd::Uint8(as), ::gostd::Uint8(as), ::gostd::Uint8(as), ::gostd::Uint8(as), ::gostd::Uint8(as), ::gostd::Uint8(as), ::gostd::Uint8(as), ::gostd::Uint8(as), ::gostd::Uint8(as), ::gostd::Uint8(as), ::gostd::Uint8(as), ::gostd::Uint8(as), ::gostd::Uint8(as), ::gostd::Uint8(as), ::gostd::Uint8(as), ::gostd::Uint8(as), ::gostd::Uint8(as), ::gostd::Uint8(as), ::gostd::Uint8(as), ::gostd::Uint8(as), ::gostd::Uint8(as), ::gostd::Uint8(as), ::gostd::Uint8(as), ::gostd::Uint8(as), ::gostd::Uint8(as), ::gostd::Uint8(as), ::gostd::Uint8(as), ::gostd::Uint8(as), ::gostd::Uint8(as), ::gostd::Uint8(as), ::gostd::Uint8(as), ::gostd::Uint8(as), ::gostd::Uint8(as), ::gostd::Uint8(as), ::gostd::Uint8(as), ::gostd::Uint8(as), ::gostd::Uint8(as), ::gostd::Uint8(as), ::gostd::Uint8(as), ::gostd::Uint8(as), ::gostd::Uint8(as), ::gostd::Uint8(as), ::gostd::Uint8(as), ::gostd::Uint8(as), ::gostd::Uint8(as), ::gostd::Uint8(as), ::gostd::Uint8(as), ::gostd::Uint8(as), ::gostd::Uint8(as), ::gostd::Uint8(as), ::gostd::Uint8(as), ::gostd::Uint8(as), ::gostd::Uint8(as), ::gostd::Uint8(as), ::gostd::Uint8(as), ::gostd::Uint8(as), ::gostd::Uint8(as), ::gostd::Uint8(as), ::gostd::Uint8(as), ::gostd::Uint8(as), ::gostd::Uint8(as), ::gostd::Uint8(as), ::gostd::Uint8(as), ::gostd::Uint8(as), ::gostd::Uint8(as), ::gostd::Uint8(as), ::gostd::Uint8(as), ::gostd::Uint8(as), ::gostd::Uint8(as), ::gostd::Uint8(as), ::gostd::Uint8(as), ::gostd::Uint8(as), ::gostd::Uint8(as), ::gostd::Uint8(as), ::gostd::Uint8(as), ::gostd::Uint8(as), ::gostd::Uint8(as), ::gostd::Uint8(as), ::gostd::Uint8(as), ::gostd::Uint8(as), ::gostd::Uint8(as), ::gostd::Uint8(as), ::gostd::Uint8(as), ::gostd::Uint8(as), ::gostd::Uint8(as), ::gostd::Uint8(as), ::gostd::Uint8(as), ::gostd::Uint8(as), ::gostd::Uint8(as), ::gostd::Uint8(as), ::gostd::Uint8(as), ::gostd::Uint8(as), ::gostd::Uint8(as), ::gostd::Uint8(as), ::gostd::Uint8(as), ::gostd::Uint8(as), ::gostd::Uint8(as), ::gostd::Uint8(as), ::gostd::Uint8(as), ::gostd::Uint8(as), ::gostd::Uint8(as), ::gostd::Uint8(as), ::gostd::Uint8(as), ::gostd::Uint8(as), ::gostd::Uint8(as), ::gostd::Uint8(as), ::gostd::Uint8(as), ::gostd::Uint8(as), ::gostd::Uint8(as), ::gostd::Uint8(as), ::gostd::Uint8(as), ::gostd::Uint8(as), ::gostd::Uint8(as), ::gostd::Uint8(as), ::gostd::Uint8(as), ::gostd::Uint8(as), ::gostd::Uint8(as), ::gostd::Uint8(as), ::gostd::Uint8(as), ::gostd::Uint8(as), ::gostd::Uint8(as), ::gostd::Uint8(as), ::gostd::Uint8(as), ::gostd::Uint8(as), ::gostd::Uint8(xx), ::gostd::Uint8(xx), ::gostd::Uint8(xx), ::gostd::Uint8(xx), ::gostd::Uint8(xx), ::gostd::Uint8(xx), ::gostd::Uint8(xx), ::gostd::Uint8(xx), ::gostd::Uint8(xx), ::gostd::Uint8(xx), ::gostd::Uint8(xx), ::gostd::Uint8(xx), ::gostd::Uint8(xx), ::gostd::Uint8(xx), ::gostd::Uint8(xx), ::gostd::Uint8(xx), ::gostd::Uint8(xx), ::gostd::Uint8(xx), ::gostd::Uint8(xx), ::gostd::Uint8(xx), ::gostd::Uint8(xx), ::gostd::Uint8(xx), ::gostd::Uint8(xx), ::gostd::Uint8(xx), ::gostd::Uint8(xx), ::gostd::Uint8(xx), ::gostd::Uint8(xx), ::gostd::Uint8(xx), ::gostd::Uint8(xx), ::gostd::Uint8(xx), ::gostd::Uint8(xx), ::gostd::Uint8(xx), ::gostd::Uint8(xx), ::gostd::Uint8(xx), ::gostd::Uint8(xx), ::gostd::Uint8(xx), ::gostd::Uint8(xx), ::gostd::Uint8(xx), ::gostd::Uint8(xx), ::gostd::Uint8(xx), ::gostd::Uint8(xx), ::gostd::Uint8(xx), ::gostd::Uint8(xx), ::gostd::Uint8(xx), ::gostd::Uint8(xx), ::gostd::Uint8(xx), ::gostd::Uint8(xx), ::gostd::Uint8(xx), ::gostd::Uint8(xx), ::gostd::Uint8(xx), ::gostd::Uint8(xx), ::gostd::Uint8(xx), ::gostd::Uint8(xx), ::gostd::Uint8(xx), ::gostd::Uint8(xx), ::gostd::Uint8(xx), ::gostd::Uint8(xx), ::gostd::Uint8(xx), ::gostd::Uint8(xx), ::gostd::Uint8(xx), ::gostd::Uint8(xx), ::gostd::Uint8(xx), ::gostd::Uint8(xx), ::gostd::Uint8(xx), ::gostd::Uint8(xx), ::gostd::Uint8(xx), ::gostd::Uint8(s1), ::gostd::Uint8(s1), ::gostd::Uint8(s1), ::gostd::Uint8(s1), ::gostd::Uint8(s1), ::gostd::Uint8(s1), ::gostd::Uint8(s1), ::gostd::Uint8(s1), ::gostd::Uint8(s1), ::gostd::Uint8(s1), ::gostd::Uint8(s1), ::gostd::Uint8(s1), ::gostd::Uint8(s1), ::gostd::Uint8(s1), ::gostd::Uint8(s1), ::gostd::Uint8(s1), ::gostd::Uint8(s1), ::gostd::Uint8(s1), ::gostd::Uint8(s1), ::gostd::Uint8(s1), ::gostd::Uint8(s1), ::gostd::Uint8(s1), ::gostd::Uint8(s1), ::gostd::Uint8(s1), ::gostd::Uint8(s1), ::gostd::Uint8(s1), ::gostd::Uint8(s1), ::gostd::Uint8(s1), ::gostd::Uint8(s1), ::gostd::Uint8(s1), ::gostd::Uint8(s2), ::gostd::Uint8(s3), ::gostd::Uint8(s3), ::gostd::Uint8(s3), ::gostd::Uint8(s3), ::gostd::Uint8(s3), ::gostd::Uint8(s3), ::gostd::Uint8(s3), ::gostd::Uint8(s3), ::gostd::Uint8(s3), ::gostd::Uint8(s3), ::gostd::Uint8(s3), ::gostd::Uint8(s3), ::gostd::Uint8(s4), ::gostd::Uint8(s3), ::gostd::Uint8(s3), ::gostd::Uint8(s5), ::gostd::Uint8(s6), ::gostd::Uint8(s6), ::gostd::Uint8(s6), ::gostd::Uint8(s7), ::gostd::Uint8(xx), ::gostd::Uint8(xx), ::gostd::Uint8(xx), ::gostd::Uint8(xx), ::gostd::Uint8(xx), ::gostd::Uint8(xx), ::gostd::Uint8(xx), ::gostd::Uint8(xx), ::gostd::Uint8(xx), ::gostd::Uint8(xx), ::gostd::Uint8(xx)};
 
-::gostd::Array<acceptRange, 5> acceptRanges = {{locb, hicb}, {160, hicb}, {locb, 159}, {144, hicb}, {locb, 143}};
+::gostd::Array<acceptRange, 5> acceptRanges = {acceptRange({locb, hicb}), acceptRange({160, hicb}), acceptRange({locb, 159}), acceptRange({144, hicb}), acceptRange({locb, 143})};
 
 ::gostd::Bool FullRune(::gostd::Slice<::gostd::Byte> p) {
 auto n=::gostd::Len(p);
@@ -149,7 +149,7 @@ auto lim=(end-UTFMax);
 if ((lim<0)) {
 lim=0;
 };
-for (--start;(start>=lim);--start){
+for (start--;(start>=lim);start--){
 if (RuneStart(p[start])) {
 break;
 };
@@ -182,7 +182,7 @@ auto lim=(end-UTFMax);
 if ((lim<0)) {
 lim=0;
 };
-for (--start;(start>=lim);--start){
+for (start--;(start>=lim);start--){
 if (RuneStart(s[start])) {
 break;
 };
@@ -268,21 +268,21 @@ return 4;
 auto np=::gostd::Len(p);
 ::gostd::Int n;
 ;
-for (auto i=0;(i<np);){
-++n;
+for (::gostd::Int i=0;(i<np);){
+n++;
 auto c=p[i];
 if ((c<RuneSelf)) {
-++i;
+i++;
 continue;
 };
 auto x=first[c];
 if ((x==xx)) {
-++i;
+i++;
 continue;
 };
 auto size=::gostd::Int((x&7));
 if (((i+size)>np)) {
-++i;
+i++;
 continue;
 };
 auto accept=acceptRanges[(x>>4)];
@@ -304,20 +304,20 @@ return n;
 ::gostd::Int n;
 {
 auto ns=::gostd::Len(s);
-for (auto i=0;(i<ns);++n){
+for (::gostd::Int i=0;(i<ns);n++){
 auto c=s[i];
 if ((c<RuneSelf)) {
-++i;
+i++;
 continue;
 };
 auto x=first[c];
 if ((x==xx)) {
-++i;
+i++;
 continue;
 };
 auto size=::gostd::Int((x&7));
 if (((i+size)>ns)) {
-++i;
+i++;
 continue;
 };
 auto accept=acceptRanges[(x>>4)];
@@ -342,10 +342,10 @@ return ((b&192)!=128);
 
 ::gostd::Bool Valid(::gostd::Slice<::gostd::Byte> p) {
 auto n=::gostd::Len(p);
-for (auto i=0;(i<n);){
+for (::gostd::Int i=0;(i<n);){
 auto pi=p[i];
 if ((pi<RuneSelf)) {
-++i;
+i++;
 continue;
 };
 auto x=first[pi];
@@ -373,10 +373,10 @@ return true;
 
 ::gostd::Bool ValidString(::gostd::String s) {
 auto n=::gostd::Len(s);
-for (auto i=0;(i<n);){
+for (::gostd::Int i=0;(i<n);){
 auto si=s[i];
 if ((si<RuneSelf)) {
-++i;
+i++;
 continue;
 };
 auto x=first[si];

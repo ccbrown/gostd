@@ -114,7 +114,7 @@ func (g *FileGenerator) transpileExpression(expr ast.Expr) string {
 				if i > 0 {
 					ret += ", "
 				}
-				ret += g.transpileExpression(v)
+				ret += g.transpileType(ar.Elem()) + "(" + g.transpileExpression(v) + ")"
 			}
 			ret += "}"
 			return ret
@@ -197,7 +197,11 @@ func (g *FileGenerator) transpileStatement(stmt ast.Stmt) string {
 		if len(stmt.Lhs) > 1 {
 			ret += fmt.Sprintf("auto [%v]", strings.Join(left, ", "))
 		} else if isDeclaration {
-			ret += fmt.Sprintf("auto %v", left[0])
+			if g.TypeInfo.Types[stmt.Rhs[0]].Value != nil {
+				ret += fmt.Sprintf("::gostd::Int %v", left[0])
+			} else {
+				ret += fmt.Sprintf("auto %v", left[0])
+			}
 		} else {
 			ret += left[0]
 		}
@@ -246,7 +250,7 @@ func (g *FileGenerator) transpileStatement(stmt ast.Stmt) string {
 		}
 		return ret
 	case *ast.IncDecStmt:
-		return stmt.Tok.String() + g.transpileExpression(stmt.X)
+		return g.transpileExpression(stmt.X) + stmt.Tok.String()
 	case *ast.ReturnStmt:
 		if stmt.Results != nil {
 			exprs := g.transpileExpressions(stmt.Results)

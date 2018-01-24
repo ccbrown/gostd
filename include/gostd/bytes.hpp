@@ -32,7 +32,7 @@ static Func<bool(Rune)> makeCutsetFunc(String cutset) {
 
 static Slice<Byte> TrimRightFunc(Slice<Byte> s, Func<bool(Rune)> f) {
     // TODO: utf8
-    while (s.Len() > 0 && f(s[s.Len() - 1])) {
+    while (s.Len() > 0 && f(Rune(s[s.Len() - 1]))) {
         s = s.Head(s.Len()-1);
     }
     return s;
@@ -97,21 +97,21 @@ public:
     explicit Reader(Slice<Byte> b) : _b{b} {}
 
     auto Read(Slice<Byte> b) {
-        struct { int n = 0; Error err; } ret;
-        if (_offset >= _b.Len()) {
+        struct { Int n; Error err; } ret;
+        if (_offset >= Int64(_b.Len())) {
             ret.err = io::EOF;
         } else {
-            ret.n = Copy(b, _b.Tail(_offset));
-            _offset += ret.n;
+            ret.n = Int(Copy(b, _b.Tail(_offset)));
+            _offset += Int64(ret.n);
         }
         return ret;
     }
 
     auto ReadAt(Slice<Byte> b, Int64 off) {
-        struct { int n = 0; Error err; } ret;
+        struct { Int n; Error err; } ret;
         if (off < 0) {
             ret.err = errors::New("bytes::Reader::ReaderAt: negative offset");
-        } else if (off >= _b.Len()) {
+        } else if (off >= Int64(_b.Len())) {
             ret.err = io::EOF;
         } else {
             ret.n = Copy(b, _b.Tail(off));
@@ -124,7 +124,7 @@ public:
 
 private:
     Slice<Byte> _b;
-    Int _offset = 0;
+    Int64 _offset = 0;
 };
 
 } // namespace gostd::bytes

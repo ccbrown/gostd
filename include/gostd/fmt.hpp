@@ -42,6 +42,13 @@ struct formatter<T, typename cpp::enable_if<cpp::is_enum<T>::value>::type> {
     }
 };
 
+template <typename T, typename Tag>
+struct formatter<NumericType<T, Tag>, void> {
+    static String sprint(NumericType<T, Tag> arg) {
+        return formatter<T>::sprint(arg.value());
+    }
+};
+
 static String Sprint() {
     return "";
 }
@@ -67,7 +74,7 @@ auto Print(Args... args) {
 
 template <typename Writer, typename... Args>
 auto Fprintln(Writer w, Args... args) {
-    struct { int n; Error err; } ret;
+    struct { Int n; Error err; } ret;
     auto [n, err] = Fprint(w, args...);
     ret.n = n;
     ret.err = err;

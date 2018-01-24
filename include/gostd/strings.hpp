@@ -9,7 +9,7 @@ static bool HasPrefix(String s, String prefix) {
     if (prefix.Len() > s.Len()) {
         return false;
     }
-    for (Int i = 0; i < prefix.Len(); ++i) {
+    for (Int i = 0; i < prefix.Len(); i++) {
         if (s[i] != prefix[i]) {
             return false;
         }
@@ -21,7 +21,7 @@ static bool HasSuffix(String s, String suffix) {
     if (suffix.Len() > s.Len()) {
         return false;
     }
-    for (Int i = 0; i < suffix.Len(); ++i) {
+    for (Int i = 0; i < suffix.Len(); i++) {
         if (s[s.Len() - suffix.Len() + i] != suffix[i]) {
             return false;
         }
@@ -54,7 +54,7 @@ static Func<bool(Rune)> makeCutsetFunc(String cutset) {
 
 static String TrimRightFunc(String s, Func<bool(Rune)> f) {
     // TODO: utf8
-    while (s.Len() > 0 && f(s[s.Len() - 1])) {
+    while (s.Len() > 0 && f(Rune(s[s.Len() - 1]))) {
         s = s.Head(s.Len()-1);
     }
     return s;

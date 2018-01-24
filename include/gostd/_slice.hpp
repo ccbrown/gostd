@@ -9,7 +9,14 @@ class Slice {
 public:
     constexpr Slice() {}
 
-    explicit Slice(Int len, Int cap = 0) : _data(cap >= len ? cap : len), _len{len} {}
+    template <typename N>
+    explicit Slice(N len, typename cpp::enable_if<cpp::is_integral<N>::value>::type* = 0) : _data(Uint64(len)), _len{Int(len)} {}
+
+    template <typename N, typename NTag>
+    explicit Slice(NumericType<N, NTag> len) : _data(Uint64(len)), _len{Int(len)} {}
+
+    template <typename N, typename M>
+    Slice(N len, M cap) : _data(Uint64(cap) >= Uint64(len) ? Uint64(cap) : Uint64(len)), _len{Int(len)} {}
 
     template <typename... Rem>
     explicit Slice(T next, Rem&&... rem) : _data(1 + sizeof...(rem)), _len{1} {
@@ -18,39 +25,42 @@ public:
     }
 
     template <typename U = T>
-    explicit Slice(String s, typename cpp::enable_if<cpp::is_same<U, Byte>::value>::type* = 0) : _data(s.Len()), _len{s.Len()} {
-        for (Int i = 0; i < _len; ++i) {
+    explicit Slice(String s, typename cpp::enable_if<cpp::is_same<U, Byte>::value>::type* = 0) : _data(Uint64(s.Len())), _len{s.Len()} {
+        for (Int i = 0; i < _len; i++) {
             _data[i] = s[i];
         }
     }
 
     explicit operator String() const {
         if (!_len) { return {}; }
-        return String(reinterpret_cast<const char*>(&_data[_pos]), _len);
+        return String(reinterpret_cast<const char*>(&_data[_pos]), _len.value());
     }
 
-    constexpr T& operator[](int i) {
-        if (i >= _len) {
+    template <typename N>
+    constexpr T& operator[](N i) {
+        if (Int(i) >= _len) {
             Panic("out of bounds");
         }
-        return _data[_pos + i];
+        return _data[_pos + Int(i)];
     }
 
     constexpr Int Len() const { return _len; }
-    constexpr Int Cap() const { return _data.count() - _pos; }
+    constexpr Int Cap() const { return Int(_data.count()) - _pos; }
 
-    Slice Head(Int end) const {
-        if (end > Cap()) {
+    template <typename N>
+    Slice Head(N end) const {
+        if (Int(end) > Cap()) {
             Panic("out of bounds");
         }
-        return Slice(_data, _pos, end);
+        return Slice(_data, _pos, Int(end));
     }
 
-    Slice Tail(Int start) const {
-        if (start > _len) {
+    template <typename N>
+    Slice Tail(N start) const {
+        if (Int(start) > _len) {
             Panic("out of bounds");
         }
-        return Slice(_data, _pos + start, _len - start);
+        return Slice(_data, _pos + Int(start), _len - Int(start));
     }
 
     Slice _sliceWithSuffix(Slice<T> elements) const {

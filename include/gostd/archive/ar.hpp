@@ -43,7 +43,7 @@ public:
             return {0, io::EOF};
         }
         auto [n, err] = io::LimitedReader{_r, _unread}.Read(b);
-        _unread -= n;
+        _unread -= Int64(n);
         return {n, err};
     }
 
@@ -117,21 +117,21 @@ private:
         if (auto [n, err] = strconv::ParseInt(strings::TrimRight(str.Head(6), " "), 10, 32); err) {
             return {{}, errors::New("unable to parse uid")};
         } else {
-            header->Uid = n;
+            header->Uid = Int(n);
             str = str.Tail(6);
         }
 
         if (auto [n, err] = strconv::ParseInt(strings::TrimRight(str.Head(6), " "), 10, 32); err) {
             return {{}, errors::New("unable to parse gid")};
         } else {
-            header->Gid = n;
+            header->Gid = Int(n);
             str = str.Tail(6);
         }
 
-        if (auto [n, err] = strconv::ParseUint(strings::TrimRight(str.Head(8), " "), 8, 32); err) {
+        if (auto [n, err] = strconv::ParseUint(strings::TrimRight(str.Head(8), " "), 8, 64); err) {
             return {{}, errors::New("unable to parse mode")};
         } else {
-            header->Mode = n;
+            header->Mode = Int64(n);
             str = str.Tail(8);
         }
 

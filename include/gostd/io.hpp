@@ -52,11 +52,11 @@ public:
         if (_off >= _limit) {
             return {0, EOF};
         }
-        if (auto max = _limit - _off; p.Len() > max) {
+        if (auto max = _limit - _off; Int64(p.Len()) > max) {
             p = p.Head(max);
         }
         auto [n, err] = _r.ReadAt(p, _off);
-        _off += n;
+        _off += Int64(n);
         return {n, err};
     }
 
@@ -110,7 +110,7 @@ static auto Copy(Writer dst, Reader src) {
         if (n > 0) {
             auto [nw, err] = dst.Write(buf.Head(n));
             if (nw > 0) {
-                ret.written += nw;
+                ret.written += Int64(nw);
             }
             if (err) {
                 ret.err = err;
@@ -143,11 +143,11 @@ struct LimitedReader {
         if (N <= 0) {
             return {0, EOF};
         }
-        if (p.Len() > N) {
+        if (Int64(p.Len()) > N) {
             p = p.Head(N);
         }
         auto [n, err] = R.Read(p);
-        N -= n;
+        N -= Int64(n);
         return {n, err};
     }
 };

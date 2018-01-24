@@ -1,22 +1,10 @@
 #pragma once
 
-#include <gostd/allocation.hpp>
+#include <gostd/_allocation.hpp>
 #include <gostd/cpp.hpp>
+#include <gostd/_numeric_types.hpp>
 
 namespace gostd {
-
-using Bool = bool;
-using Byte = cpp::uint8_t;
-using Rune = cpp::int32_t;
-using Uint8 = cpp::uint8_t;
-using Uint16 = cpp::uint16_t;
-using Int = int;
-using Int32 = cpp::int32_t;
-using Uint = unsigned int;
-using Uint32 = cpp::uint32_t;
-using Int64 = cpp::int64_t;
-using Uint64 = cpp::uint64_t;
-using UintPtr = cpp::uintptr_t;
 
 template <typename F>
 using Func = cpp::function<F>;
@@ -31,11 +19,11 @@ template <typename Destination, typename Source>
 Int Copy(Destination dst, Source src) {
     auto count = (dst.Len() < src.Len() ? dst.Len() : src.Len());
     if (count > 0 && &dst[0] > &src[0] && &dst[0] <= &src[count-1]) {
-        for (Int i = count - 1; i >= 0; --i) {
+        for (Int i = count - 1; i >= 0; i--) {
             dst[i] = src[i];
         }
     } else {
-        for (Int i = 0; i < count; ++i) {
+        for (Int i = 0; i < count; i++) {
             dst[i] = src[i];
         }
     }

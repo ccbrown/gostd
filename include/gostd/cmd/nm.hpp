@@ -22,7 +22,7 @@ static int listSymbols(String path) {
         return 1;
     }
     if (macho->Symtab) {
-        for (Int i = 0; i < macho->Symtab->Syms.Len(); ++i) {
+        for (Int i = 0; i < macho->Symtab->Syms.Len(); i++) {
             fmt::Println(macho->Symtab->Syms[i].Name);
         }
     }
@@ -31,7 +31,7 @@ static int listSymbols(String path) {
 
 static int Run(Slice<String> args) {
     if (args.Len() >= 1) {
-        for (Int i = 0; i < args.Len(); ++i) {
+        for (Int i = 0; i < args.Len(); i++) {
             if (auto ret = listSymbols(args[i]); ret != 0) {
                 return ret;
             }

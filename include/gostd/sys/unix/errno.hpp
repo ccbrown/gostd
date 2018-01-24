@@ -16,6 +16,9 @@ public:
 
     constexpr operator UintPtr() const { return _errno; }
 
+    template <typename T> constexpr bool operator==(T v) const { return _errno == UintPtr(v); }
+    template <typename T> constexpr bool operator!=(T v) const { return _errno != UintPtr(v); }
+
     String Error() const;
 
 private:

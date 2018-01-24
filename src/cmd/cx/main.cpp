@@ -24,7 +24,7 @@ int main(int argc, const char* argv[]) {
 
     String nihongo = "日本語";
 
-    for (Int i = 0; i < Len(nihongo); ++i) {
+    for (Int i = 0; i < Len(nihongo); i++) {
         if (i > 0) {
             fmt::Print(", ");
         }

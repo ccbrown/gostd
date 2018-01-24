@@ -29,7 +29,7 @@ struct File : FileHeader {
         auto bo = ByteOrder;
         Slice<Symbol> symtab(hdr->Nsyms);
         auto b = New<bytes::Reader>(symdat);
-        for (Int i = 0; i < symtab.Len(); ++i) {
+        for (Int i = 0; i < symtab.Len(); i++) {
             auto& sym = symtab[i];
             Uint64 nameOffset;
             if (Magic == Magic64) {
@@ -38,7 +38,7 @@ struct File : FileHeader {
                     ret.err = err;
                     return ret;
                 }
-                nameOffset = n.Name;
+                nameOffset = Uint64(n.Name);
                 sym.Type = n.Type;
                 sym.Sect = n.Sect;
                 sym.Desc = n.Desc;
@@ -49,13 +49,13 @@ struct File : FileHeader {
                     ret.err = err;
                     return ret;
                 }
-                nameOffset = n.Name;
+                nameOffset = Uint64(n.Name);
                 sym.Type = n.Type;
                 sym.Sect = n.Sect;
                 sym.Desc = n.Desc;
-                sym.Value = n.Value;
+                sym.Value = Uint64(n.Value);
             }
-            if (nameOffset >= strtab.Len()) {
+            if (nameOffset >= Uint64(strtab.Len())) {
                 ret.err = New<FormatError>(offset, "invalid name in symbol table");
                 return ret;
             }
@@ -71,7 +71,7 @@ auto NewFile(io::ReaderAt r) {
     struct { Ptr<File> f; Error err; } ret;
     auto f = New<File>();
 
-    auto sr = New<io::SectionReader>(r, 0, (Uint64(1)<<63)-1);
+    auto sr = New<io::SectionReader>(r, 0, (Int64(1)<<63)-1);
 
     Slice<Byte> ident(4);
     if (auto [n, err] = r.ReadAt(ident, 0); err) {
@@ -98,7 +98,7 @@ auto NewFile(io::ReaderAt r) {
         return ret;
     }
 
-    auto offset = f->Magic == Magic64 ? fileHeaderSize64 : fileHeaderSize32;
+    Int64 offset = f->Magic == Magic64 ? fileHeaderSize64 : fileHeaderSize32;
 
     Slice<Byte> dat(f->Cmdsz);
     if (auto [_, err] = r.ReadAt(dat, offset); err) {
@@ -108,7 +108,7 @@ auto NewFile(io::ReaderAt r) {
 
     auto bo = f->ByteOrder;
 
-    for (Int i = 0; i < f->Ncmd; ++i) {
+    for (Uint32 i = 0; i < f->Ncmd; i++) {
         if (dat.Len() < 8) {
             ret.err = New<FormatError>(offset, "command block too small");
             return ret;
@@ -116,18 +116,18 @@ auto NewFile(io::ReaderAt r) {
 
         auto cmd = LoadCmd(bo.Uint32(dat));
         auto siz = bo.Uint32(dat.Tail(4));
-        if (siz < 8 || siz > dat.Len()) {
+        if (siz < 8 || siz > Uint32(dat.Len())) {
             ret.err = New<FormatError>(offset, "invalid command block size");
             return ret;
         }
 
         auto cmddat = dat.Head(siz);
         dat = dat.Tail(siz);
-        offset += siz;
+        offset += Int64(siz);
 
         // TODO: support more commands
-        switch (cmd) {
-        case LoadCmdSymtab: {
+        switch (cmd.value()) {
+        case LoadCmdSymtab.value(): {
             SymtabCmd hdr;
             auto b = New<bytes::Reader>(cmddat);
             if (auto err = encoding::binary::Read(b, bo, &hdr); err) {
@@ -135,13 +135,13 @@ auto NewFile(io::ReaderAt r) {
                 return ret;
             }
             Slice<Byte> strtab(hdr.Strsize);
-            if (auto [_, err] = r.ReadAt(strtab, hdr.Stroff); err) {
+            if (auto [_, err] = r.ReadAt(strtab, Int64(hdr.Stroff)); err) {
                 ret.err = err;
                 return ret;
             }
             auto symsz = f->Magic == Magic64 ? 16 : 12;
             Slice<Byte> symdat(hdr.Nsyms * symsz);
-            if (auto [_, err] = r.ReadAt(symdat, hdr.Symoff); err) {
+            if (auto [_, err] = r.ReadAt(symdat, Int64(hdr.Symoff)); err) {
                 ret.err = err;
                 return ret;
             }

@@ -73,18 +73,19 @@ struct boolType {
     static constexpr Int serializedSize() { return 1; }
 
     static void deserialize(Slice<Byte> buf, const ByteOrder& order, bool* dest) {
-        *dest = buf[0];
+        *dest = buf[0] != 0;
     }
 };
 
-template <typename T>
-struct classType;
+template <typename T> struct classType;
+template <typename T> struct numericType;
 
 template <typename T>
-using dataType = typename cpp::conditional<cpp::is_class<T>::value, classType<T>,
+using dataType = typename cpp::conditional<IsNumericType<T>::value, numericType<T>,
+                 typename cpp::conditional<cpp::is_class<T>::value, classType<T>,
                  typename cpp::conditional<cpp::is_enum<T>::value || cpp::is_integral<T>::value, intType<T>,
                  typename cpp::conditional<cpp::is_same<T, bool>::value, boolType,
-                 void>::type>::type>::type;
+                 void>::type>::type>::type>::type;
 
 template <typename T>
 struct classType {
@@ -115,6 +116,17 @@ struct classType {
 
     static void deserialize(Slice<Byte> buf, const ByteOrder& order, T* dest) {
         _deserialize(buf, order, dest, cpp::make_index_sequence<cpp::field_count<T>()>{});
+    }
+};
+
+template <typename T>
+struct numericType {
+    static constexpr Int serializedSize() { return dataType<typename T::ValueType>::serializedSize(); }
+
+    static void deserialize(Slice<Byte> buf, const ByteOrder& order, T* dest) {
+        typename T::ValueType n;
+        dataType<typename T::ValueType>::deserialize(buf, order, &n);
+        *dest = T(n);
     }
 };
 

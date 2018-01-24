@@ -4,11 +4,9 @@
 
 namespace gostd::sys::unix {
 
-enum : Int {
-	AT_FDCWD            = -0x2,
-	AT_REMOVEDIR        = 0x80,
-	AT_SYMLINK_FOLLOW   = 0x40,
-	AT_SYMLINK_NOFOLLOW = 0x20,
-};
+constexpr auto AT_FDCWD            = UntypedConstant(-0x2);
+constexpr auto AT_REMOVEDIR        = UntypedConstant(0x80);
+constexpr auto AT_SYMLINK_FOLLOW   = UntypedConstant(0x40);
+constexpr auto AT_SYMLINK_NOFOLLOW = UntypedConstant(0x20);
 
 } // namespace gostd::sys::unix
