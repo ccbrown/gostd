@@ -24,19 +24,19 @@ public:
         return _data[_pos + Int(i)];
     }
 
-    constexpr Int Len() const { return _len; }
+    constexpr Int len() const { return _len; }
 
     String operator+(String s) const {
-        auto len = Len() + s.Len();
-        allocation<Byte> data(Uint64(len) + 1);
-        for (auto i = 0; i < Len(); ++i) {
+        auto l = len() + s.len();
+        allocation<Byte> data(Uint64(l) + 1);
+        for (auto i = 0; i < len(); ++i) {
             data[i] = _data[_pos + i];
         }
-        for (auto i = 0; i < s.Len(); ++i) {
-            data[Len() + i] = s[i];
+        for (auto i = 0; i < s.len(); ++i) {
+            data[len() + i] = s[i];
         }
-        data[len] = 0;
-        return String{data, 0, len};
+        data[l] = 0;
+        return String{data, 0, l};
     }
 
     bool operator==(String s) const {

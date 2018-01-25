@@ -25,7 +25,7 @@ public:
     }
 
     template <typename U = T>
-    explicit Slice(String s, typename cpp::enable_if<cpp::is_same<U, Byte>::value>::type* = 0) : _data(Uint64(s.Len())), _len{s.Len()} {
+    explicit Slice(String s, typename cpp::enable_if<cpp::is_same<U, Byte>::value>::type* = 0) : _data(Uint64(s.len())), _len{s.len()} {
         for (Int i = 0; i < _len; i++) {
             _data[i] = s[i];
         }
@@ -44,12 +44,12 @@ public:
         return _data[_pos + Int(i)];
     }
 
-    constexpr Int Len() const { return _len; }
-    constexpr Int Cap() const { return Int(_data.count()) - _pos; }
+    constexpr Int len() const { return _len; }
+    constexpr Int cap() const { return Int(_data.count()) - _pos; }
 
     template <typename N>
     Slice Head(N end) const {
-        if (Int(end) > Cap()) {
+        if (Int(end) > cap()) {
             Panic("out of bounds");
         }
         return Slice(_data, _pos, Int(end));
@@ -64,12 +64,12 @@ public:
     }
 
     Slice _sliceWithSuffix(Slice<T> elements) const {
-        if (Cap() >= _len + elements.Len()) {
-            auto ret = Slice(_data, _pos, _len + elements.Len());
+        if (cap() >= _len + elements.len()) {
+            auto ret = Slice(_data, _pos, _len + elements.len());
             Copy(ret.Tail(_len), elements);
             return ret;
         }
-        auto ret = Slice(_len + elements.Len(), _len + (_len >= elements.Len() ? _len : elements.Len()));
+        auto ret = Slice(_len + elements.len(), _len + (_len >= elements.len() ? _len : elements.len()));
         Copy(ret, *this);
         Copy(ret.Tail(_len), elements);
         return ret;
@@ -79,7 +79,7 @@ public:
 
     template <typename... Rem>
     Slice _sliceWithSuffix(T element, Rem&&... rem) const {
-        if (Cap() >= _len + 1 + sizeof...(rem)) {
+        if (cap() >= _len + 1 + sizeof...(rem)) {
             _data[_len] = cpp::move(element);
             return Slice(_data, _pos, _len + 1)._sliceWithSuffix(cpp::forward<Rem>(rem)...);
         }

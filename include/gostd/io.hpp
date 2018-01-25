@@ -52,7 +52,7 @@ public:
         if (_off >= _limit) {
             return {0, EOF};
         }
-        if (auto max = _limit - _off; Int64(p.Len()) > max) {
+        if (auto max = _limit - _off; Int64(Len(p)) > max) {
             p = p.Head(max);
         }
         auto [n, err] = _r.ReadAt(p, _off);
@@ -84,7 +84,7 @@ struct Writer {
 
 static auto ReadAtLeast(Reader r, Slice<Byte> buf, Int min) {
     struct { Int n = 0; Error err; } ret;
-    if (buf.Len() < min) {
+    if (Len(buf) < min) {
         ret.err = ErrShortBuffer;
         return ret;
     }
@@ -132,7 +132,7 @@ static auto Copy(Writer dst, Reader src) {
 }
 
 static auto ReadFull(Reader r, Slice<Byte> buf) {
-    return ReadAtLeast(r, buf, buf.Len());
+    return ReadAtLeast(r, buf, Len(buf));
 }
 
 struct LimitedReader {
@@ -143,7 +143,7 @@ struct LimitedReader {
         if (N <= 0) {
             return {0, EOF};
         }
-        if (Int64(p.Len()) > N) {
+        if (Int64(Len(p)) > N) {
             p = p.Head(N);
         }
         auto [n, err] = R.Read(p);

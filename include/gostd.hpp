@@ -17,7 +17,7 @@ void Panic(T v) {
 
 template <typename Destination, typename Source>
 Int Copy(Destination dst, Source src) {
-    auto count = (dst.Len() < src.Len() ? dst.Len() : src.Len());
+    auto count = (Len(dst) < Len(src) ? Len(dst) : Len(src));
     if (count > 0 && &dst[0] > &src[0] && &dst[0] <= &src[count-1]) {
         for (Int i = count - 1; i >= 0; i--) {
             dst[i] = src[i];
@@ -59,8 +59,8 @@ Ptr<T> New(Args... args) {
     return Ptr<T>::New(args...);
 }
 
-template <typename T>
-Int Len(T&& v) { return v.Len(); }
+template <typename T> Int Len(T&& v) { return v.len(); }
+template <typename T> Int Cap(T&& v) { return v.cap(); }
 
 class Defer {
 public:

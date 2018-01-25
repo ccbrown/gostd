@@ -33,7 +33,7 @@ static int listFiles(String path) {
 }
 
 static int Run(Slice<String> args) {
-    if (args.Len() >= 2) {
+    if (Len(args) >= 2) {
         if (args[0] == "t") {
             return listFiles(args[1]);
         }

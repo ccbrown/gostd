@@ -9,8 +9,8 @@ namespace gostd::strconv {
 constexpr const char digits[] = "0123456789abcdefghijklmnopqrstuvwxyz";
 
 static String Quote(String s) {
-    auto quotedLength = s.Len();
-    for (Int i = 0; i < s.Len(); i++) {
+    auto quotedLength = Len(s);
+    for (Int i = 0; i < Len(s); i++) {
         auto c = s[i];
         if (c == '\n' || c == '\t' || c == '\r' || c == '\\' || c == '"') {
             quotedLength++;
@@ -20,7 +20,7 @@ static String Quote(String s) {
     }
     Slice<Byte> buf(quotedLength);
     auto dest = 0;
-    for (Int i = 0; i < s.Len(); i++) {
+    for (Int i = 0; i < Len(s); i++) {
         auto c = s[i];
         if (c == '\n' || c == '\t' || c == '\r' || c == '\\' || c == '"') {
             buf[dest++] = '\\';
@@ -87,13 +87,13 @@ extern Error ErrSyntax, ErrRange;
 static auto ParseUint(String s, Int base, Int bitSize) {
     struct { Uint64 n = 0; Error err; } ret;
 
-    if (s.Len() == 0) {
+    if (Len(s) == 0) {
         ret.err = New<NumError>("ParseUint", s, ErrSyntax);
         return ret;
     }
 
     if (base == 0) {
-        if (s.Len() > 1 && s[0] == '0' && (s[1] == 'x' || s[1] == 'X')) {
+        if (Len(s) > 1 && s[0] == '0' && (s[1] == 'x' || s[1] == 'X')) {
             return ParseUint(s.Tail(2), 16, bitSize);
         } else if (s[0] == '0') {
             return ParseUint(s.Tail(1), 8, bitSize);
@@ -116,7 +116,7 @@ static auto ParseUint(String s, Int base, Int bitSize) {
         bitSize = sizeof(Int) * 8;
     }
 
-    for (Int i = 0; i < s.Len(); i++) {
+    for (Int i = 0; i < Len(s); i++) {
         auto c = s[i];
 
         auto v = base;
@@ -159,7 +159,7 @@ Error:
 static auto ParseInt(String s, Int base, Int bitSize) {
     struct { Int64 n = 0; Error err; } ret;
 
-    if (s.Len() == 0) {
+    if (Len(s) == 0) {
         ret.err = New<NumError>("ParseInt", s, ErrSyntax);
         return ret;
     }

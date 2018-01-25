@@ -6,7 +6,7 @@ Uint32 suffixN = 0;
 
 struct devNull {
     Writer::WriteResult Write(Slice<Byte> p) const {
-        return {p.Len(), {}};
+        return {Len(p), {}};
     }
 };
 

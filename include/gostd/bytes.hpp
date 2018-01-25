@@ -7,7 +7,7 @@
 namespace gostd::bytes {
 
 static Int IndexByte(Slice<Byte> s, Byte b) {
-    for (Int i = 0; i < s.Len(); i++) {
+    for (Int i = 0; i < Len(s); i++) {
         if (s[i] == b) {
             return i;
         }
@@ -32,8 +32,8 @@ static Func<bool(Rune)> makeCutsetFunc(String cutset) {
 
 static Slice<Byte> TrimRightFunc(Slice<Byte> s, Func<bool(Rune)> f) {
     // TODO: utf8
-    while (s.Len() > 0 && f(Rune(s[s.Len() - 1]))) {
-        s = s.Head(s.Len()-1);
+    while (Len(s) > 0 && f(Rune(s[Len(s) - 1]))) {
+        s = s.Head(Len(s)-1);
     }
     return s;
 }
@@ -58,23 +58,23 @@ public:
     io::Reader::ReadResult ReadFrom(io::Reader r) {
         io::Reader::ReadResult ret;
 
-        if (_offset >= _buf.Len()) {
+        if (_offset >= Len(_buf)) {
             Reset();
         }
 
         while (true) {
-            if (auto free = _buf.Cap() - _buf.Len(); free < MinRead) {
+            if (auto free = Cap(_buf) - Len(_buf); free < MinRead) {
                 auto newBuf = _buf;
                 if (_offset+free < MinRead) {
-                    newBuf = Slice<Byte>(_buf.Len() - _offset, 2 * _buf.Cap() + MinRead);
+                    newBuf = Slice<Byte>(Len(_buf) - _offset, 2 * Cap(_buf) + MinRead);
                 }
                 Copy(newBuf, _buf.Tail(_offset));
-                _buf = newBuf.Head(_buf.Len()-_offset);
+                _buf = newBuf.Head(Len(_buf)-_offset);
                 _offset = 0;
             }
-            auto dest = _buf.Head(_buf.Cap()).Tail(_buf.Len());
+            auto dest = _buf.Head(Cap(_buf)).Tail(Len(_buf));
             auto [n, err] = r.Read(dest);
-            _buf = _buf.Head(_buf.Len() + n);
+            _buf = _buf.Head(Len(_buf) + n);
             ret.n += n;
             if (err) {
                 if (err != io::EOF) {
@@ -98,7 +98,7 @@ public:
 
     auto Read(Slice<Byte> b) {
         struct { Int n; Error err; } ret;
-        if (_offset >= Int64(_b.Len())) {
+        if (_offset >= Int64(Len(_b))) {
             ret.err = io::EOF;
         } else {
             ret.n = Int(Copy(b, _b.Tail(_offset)));
@@ -111,11 +111,11 @@ public:
         struct { Int n; Error err; } ret;
         if (off < 0) {
             ret.err = errors::New("bytes::Reader::ReaderAt: negative offset");
-        } else if (off >= Int64(_b.Len())) {
+        } else if (off >= Int64(Len(_b))) {
             ret.err = io::EOF;
         } else {
             ret.n = Copy(b, _b.Tail(off));
-            if (ret.n < b.Len()) {
+            if (ret.n < Len(b)) {
                 ret.err = io::EOF;
             }
         }

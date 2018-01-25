@@ -27,8 +27,8 @@ struct Cmd {
         }
 
         ProcAttr pAttr;
-        pAttr.Env = Env.Len() > 0 ? Env : Environ();
-        if (auto [p, err] = StartProcess(Path, Args.Len() > 0 ? Args : Slice<String>(Path), &pAttr); err) {
+        pAttr.Env = Len(Env) > 0 ? Env : Environ();
+        if (auto [p, err] = StartProcess(Path, Len(Args) > 0 ? Args : Slice<String>(Path), &pAttr); err) {
             return err;
         } else {
             Process = p;

@@ -68,7 +68,7 @@ static Error Close(Int fd) {
 
 static auto Read(Int fd, Slice<Byte> p) {
     struct { Int n; Error err; } ret;
-    auto [r1, r2, errno] = Syscall(SYS_READ, UintPtr(fd), UintPtr(unsafe::Pointer(&p[0])), UintPtr(p.Len()));
+    auto [r1, r2, errno] = Syscall(SYS_READ, UintPtr(fd), UintPtr(unsafe::Pointer(&p[0])), UintPtr(Len(p)));
     ret.n = Int(r1);
     if (errno != 0) {
         ret.err = errno;
@@ -78,8 +78,8 @@ static auto Read(Int fd, Slice<Byte> p) {
 
 static auto Write(Int fd, Slice<Byte> p) {
     struct { Int n = 0; Error err; } ret;
-    if (p.Len() > 0) {
-        auto [r1, r2, errno] = Syscall(SYS_WRITE, UintPtr(fd), UintPtr(unsafe::Pointer(&p[0])), UintPtr(p.Len()));
+    if (Len(p) > 0) {
+        auto [r1, r2, errno] = Syscall(SYS_WRITE, UintPtr(fd), UintPtr(unsafe::Pointer(&p[0])), UintPtr(Len(p)));
         ret.n = Int(r1);
         if (errno != 0) {
             ret.err = errno;
@@ -141,21 +141,21 @@ static Error Rmdir(String path) {
 }
 
 static Error Exec(String argv0, Slice<String> argv, Slice<String> envv) {
-    Slice<String> argvz(argv.Len());
-    Slice<const char*> argvp(argv.Len() + 1);
-    for (int i = 0; i < argv.Len(); ++i) {
+    Slice<String> argvz(Len(argv));
+    Slice<const char*> argvp(Len(argv) + 1);
+    for (int i = 0; i < Len(argv); ++i) {
         argvz[i] = argv[i].NullTerminated();
         argvp[i] = argvz[i].CString();
     }
-    argvp[argv.Len().value()] = nullptr;
+    argvp[Len(argv).value()] = nullptr;
 
-    Slice<String> envvz(envv.Len());
-    Slice<const char*> envvp(envv.Len() + 1);
-    for (int i = 0; i < envv.Len(); ++i) {
+    Slice<String> envvz(Len(envv));
+    Slice<const char*> envvp(Len(envv) + 1);
+    for (int i = 0; i < Len(envv); ++i) {
         envvz[i] = envv[i].NullTerminated();
         envvp[i] = envvz[i].CString();
     }
-    envvp[envv.Len().value()] = nullptr;
+    envvp[Len(envv).value()] = nullptr;
 
     auto [r1, r2, errno] = Syscall(SYS_EXECVE, UintPtr(unsafe::Pointer(argv0.NullTerminated().CString())), UintPtr(unsafe::Pointer(&argvp[0])), UintPtr(unsafe::Pointer(&envvp[0])));
     if (errno != 0) {
@@ -252,7 +252,7 @@ static Error Lstat(String path, Stat_t* stat) {
 
 static auto Getdirentries(Int fd, Slice<Byte> buf, UintPtr* basep) {
     struct { Int n = 0; Error err; } ret;
-    auto [r1, r2, errno] = Syscall6(SYS_GETDIRENTRIES64, UintPtr(fd), UintPtr(unsafe::Pointer(&buf[0])), UintPtr(buf.Len()), UintPtr(unsafe::Pointer(basep)), 0, 0);
+    auto [r1, r2, errno] = Syscall6(SYS_GETDIRENTRIES64, UintPtr(fd), UintPtr(unsafe::Pointer(&buf[0])), UintPtr(Len(buf)), UintPtr(unsafe::Pointer(basep)), 0, 0);
     if (errno != 0) {
         ret.err = errno;
     }

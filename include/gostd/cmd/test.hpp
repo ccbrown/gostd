@@ -57,11 +57,11 @@ static auto parseMangledName(String s, String s_ = "") {
         }
 
         auto [n, suffix] = numericPrefix(s);
-        if (n <= 0 || n > suffix.Len()) {
+        if (n <= 0 || n > Len(suffix)) {
             return ret;
         }
         s = suffix;
-        if (name.Len() > 0) {
+        if (Len(name) > 0) {
             name = name + "::";
         }
         name = name + s.Head(n);
@@ -119,7 +119,7 @@ static auto findTestsInObject(io::Reader r) {
         return ret;
     }
     if (macho->Symtab) {
-        for (Int i = 0; i < macho->Symtab->Syms.Len(); i++) {
+        for (Int i = 0; i < Len(macho->Symtab->Syms); i++) {
             if (auto [test, ok] = parseSymbol(macho->Symtab->Syms[i].Name); ok) {
                 ret.tests = Append(ret.tests, test);
             }
@@ -162,7 +162,7 @@ static Error writeMainCPP(io::Writer w, Slice<Test> tests) {
     )cpp")); err) {
         return err;
     }
-    for (Int i = 0; i < tests.Len(); i++) {
+    for (Int i = 0; i < Len(tests); i++) {
         auto ns = strings::TrimRightFunc(tests[i].Name, [](Rune r) { return r != ':'; });
         if (ns != "") {
             ns = ns.Head(Len(ns) - 2);
@@ -180,7 +180,7 @@ static Error writeMainCPP(io::Writer w, Slice<Test> tests) {
     )cpp")); err) {
         return err;
     }
-    for (Int i = 0; i < tests.Len(); i++) {
+    for (Int i = 0; i < Len(tests); i++) {
         if (auto [_, err] = w.Write(Slice<Byte>("&" + tests[i].Name + ",\n")); err) {
             return err;
         }
@@ -191,7 +191,7 @@ static Error writeMainCPP(io::Writer w, Slice<Test> tests) {
     )cpp")); err) {
         return err;
     }
-    for (Int i = 0; i < tests.Len(); i++) {
+    for (Int i = 0; i < Len(tests); i++) {
         if (auto [_, err] = w.Write(Slice<Byte>("\"" + tests[i].Name + "\",\n")); err) {
             return err;
         }
@@ -210,7 +210,7 @@ static Error compileExecutable(String output, String archive) {
     if (err) {
         return err;
     }
-    if (tests.Len() == 0) {
+    if (Len(tests) == 0) {
         return errors::New("no tests found");
     }
 
@@ -268,14 +268,14 @@ static Error test(String path) {
 }
 
 static int Run(Slice<String> args) {
-    if (args.Len() >= 1) {
-        if (args.Len() == 2 && args[0] == "-c") {
+    if (Len(args) >= 1) {
+        if (Len(args) == 2 && args[0] == "-c") {
             if (auto err = compileExecutable("libgostd.test", args[1]); err) {
                 fmt::Fprintln(os::Stderr, err);
                 return 1;
             }
         } else {
-            for (Int i = 0; i < args.Len(); i++) {
+            for (Int i = 0; i < Len(args); i++) {
                 if (auto err = test(args[i]); err) {
                     fmt::Fprintln(os::Stderr, err);
                     return 1;

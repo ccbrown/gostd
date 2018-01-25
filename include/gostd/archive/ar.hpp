@@ -96,7 +96,7 @@ private:
             return {{}, err};
         }
 
-        if (buf[buf.Len()-2] != '`' || buf[buf.Len()-1] != '\n') {
+        if (buf[Len(buf)-2] != '`' || buf[Len(buf)-1] != '\n') {
             return {{}, errors::New("bad entry")};
         }
 

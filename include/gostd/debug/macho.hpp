@@ -29,7 +29,7 @@ struct File : FileHeader {
         auto bo = ByteOrder;
         Slice<Symbol> symtab(hdr->Nsyms);
         auto b = New<bytes::Reader>(symdat);
-        for (Int i = 0; i < symtab.Len(); i++) {
+        for (Int i = 0; i < Len(symtab); i++) {
             auto& sym = symtab[i];
             Uint64 nameOffset;
             if (Magic == Magic64) {
@@ -55,7 +55,7 @@ struct File : FileHeader {
                 sym.Desc = n.Desc;
                 sym.Value = Uint64(n.Value);
             }
-            if (nameOffset >= Uint64(strtab.Len())) {
+            if (nameOffset >= Uint64(Len(strtab))) {
                 ret.err = New<FormatError>(offset, "invalid name in symbol table");
                 return ret;
             }
@@ -109,14 +109,14 @@ auto NewFile(io::ReaderAt r) {
     auto bo = f->ByteOrder;
 
     for (Uint32 i = 0; i < f->Ncmd; i++) {
-        if (dat.Len() < 8) {
+        if (Len(dat) < 8) {
             ret.err = New<FormatError>(offset, "command block too small");
             return ret;
         }
 
         auto cmd = LoadCmd(bo.Uint32(dat));
         auto siz = bo.Uint32(dat.Tail(4));
-        if (siz < 8 || siz > Uint32(dat.Len())) {
+        if (siz < 8 || siz > Uint32(Len(dat))) {
             ret.err = New<FormatError>(offset, "invalid command block size");
             return ret;
         }
