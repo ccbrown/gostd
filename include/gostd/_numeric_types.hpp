@@ -142,14 +142,26 @@ template <typename T, typename Tag> constexpr bool operator!=(T v, NumericType<T
 template <typename T, typename Tag, typename U, typename = typename cpp::enable_if<cpp::is_integral<U>::value>::type>
 constexpr NumericType<T, Tag> operator-(U v, NumericType<T, Tag> n) { return NumericType<T, Tag>{v} - n; }
 
+template <typename T, typename Tag>
+constexpr NumericType<T, Tag> operator-(UntypedConstant c, NumericType<T, Tag> n) { return NumericType<T, Tag>(c) - n; }
+
 template <typename T, typename Tag, typename U, typename = typename cpp::enable_if<cpp::is_integral<U>::value>::type>
 constexpr NumericType<T, Tag> operator+(U v, NumericType<T, Tag> n) { return n + v; }
+
+template <typename T, typename Tag>
+constexpr NumericType<T, Tag> operator+(UntypedConstant c, NumericType<T, Tag> n) { return NumericType<T, Tag>(c) + n; }
 
 template <typename T, typename Tag, typename U, typename = typename cpp::enable_if<cpp::is_integral<U>::value>::type>
 constexpr NumericType<T, Tag> operator*(U v, NumericType<T, Tag> n) { return n * v; }
 
+template <typename T, typename Tag>
+constexpr NumericType<T, Tag> operator*(UntypedConstant c, NumericType<T, Tag> n) { return NumericType<T, Tag>(c) * n; }
+
 template <typename T, typename Tag, typename U, typename = typename cpp::enable_if<cpp::is_integral<U>::value>::type>
 constexpr NumericType<T, Tag> operator/(U v, NumericType<T, Tag> n) { return NumericType<T, Tag>{v} / n; }
+
+template <typename T, typename Tag>
+constexpr NumericType<T, Tag> operator/(UntypedConstant c, NumericType<T, Tag> n) { return NumericType<T, Tag>(c) / n; }
 
 template <typename T, typename Tag, typename U, typename = typename cpp::enable_if<cpp::is_integral<U>::value>::type>
 constexpr NumericType<T, Tag> operator&(U v, NumericType<T, Tag> n) { return n & v; }

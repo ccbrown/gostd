@@ -1,6 +1,7 @@
 #pragma once
 
 #include <gostd/_string.hpp>
+#include <gostd/_tuple.hpp>
 
 namespace gostd {
 
@@ -38,6 +39,14 @@ public:
 
     template <typename N>
     constexpr T& operator[](N i) {
+        if (Int(i) >= _len) {
+            Panic("out of bounds");
+        }
+        return _data[_pos + Int(i)];
+    }
+
+    template <typename N>
+    constexpr const T& operator[](N i) const {
         if (Int(i) >= _len) {
             Panic("out of bounds");
         }
@@ -88,6 +97,20 @@ public:
         ret[_len] = cpp::move(element);
         return ret._sliceWithSuffix(cpp::forward<Rem>(rem)...);
     }
+
+    struct iterator {
+        Slice slice;
+        Int offset;
+
+        bool operator!=(const iterator& other) const { return offset == other.offset; }
+        iterator& operator++() { offset++; return *this; }
+        Tuple<Int, T> operator*() const {
+            return {offset, slice[offset]};
+        }
+    };
+
+    iterator begin() { return {*this, 0}; }
+    iterator end() { return {*this, _len}; }
 
 private:
     Slice(allocation<T> data, Int pos, Int len)

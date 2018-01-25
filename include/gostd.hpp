@@ -62,6 +62,11 @@ Ptr<T> New(Args... args) {
 template <typename T> Int Len(T&& v) { return v.len(); }
 template <typename T> Int Cap(T&& v) { return v.cap(); }
 
+template <typename T, typename... Args>
+T Make(Args... args) {
+    return T(args...);
+}
+
 class Defer {
 public:
     explicit Defer(Func<void()> f) : _f{cpp::move(f)} {}

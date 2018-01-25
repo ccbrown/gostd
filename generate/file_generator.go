@@ -1,30 +1,21 @@
-package main
+package generate
 
 import (
 	"fmt"
-	"os"
-	"path/filepath"
-	"strings"
-
 	"go/ast"
-	"go/build"
 	"go/constant"
-	"go/importer"
-	"go/parser"
 	"go/token"
 	"go/types"
+	"strings"
 )
 
-type Generator struct {
-	IncludeDir string
-	SourceDir  string
-}
+type DeclarationClass int
 
-type PackageGenerator struct {
-	IncludeDir string
-	SourceDir  string
-	TypeInfo   *types.Info
-}
+const (
+	HeaderDeclarations DeclarationClass = iota
+	CPPDeclarations
+	AllDeclarations
+)
 
 type FileGenerator struct {
 	TypeInfo         *types.Info
@@ -142,6 +133,9 @@ func (g *FileGenerator) transpileExpression(expr ast.Expr) string {
 		}
 		return expr.Name
 	case *ast.CallExpr:
+		if id, ok := expr.Fun.(*ast.Ident); ok && id.Name == "make" {
+			return "::gostd::Make<" + g.transpileTypeExpression(expr.Args[0]) + ">(" + strings.Join(g.transpileExpressions(expr.Args[1:]), ", ") + ")"
+		}
 		return g.transpileExpression(expr.Fun) + "(" + strings.Join(g.transpileExpressions(expr.Args), ", ") + ")"
 	case *ast.IndexExpr:
 		return g.transpileExpression(expr.X) + "[" + g.transpileExpression(expr.Index) + "]"
@@ -165,8 +159,7 @@ func (g *FileGenerator) transpileExpression(expr ast.Expr) string {
 	case *ast.SelectorExpr:
 		return g.transpileExpression(expr.X) + "." + expr.Sel.Name
 	}
-	//panic(fmt.Errorf("unsupported expression type %T\n", expr))
-	return fmt.Sprintf("/* %T */", expr)
+	panic(fmt.Errorf("unsupported expression type %T\n", expr))
 }
 
 func (g *FileGenerator) transpileExpressions(exprs []ast.Expr) []string {
@@ -269,6 +262,21 @@ func (g *FileGenerator) transpileStatement(stmt ast.Stmt) string {
 		return ret
 	case *ast.DeclStmt:
 		return g.transpileDeclaration(stmt.Decl, AllDeclarations)
+	case *ast.RangeStmt:
+		ret := "for ("
+		if stmt.Tok == token.DEFINE {
+			ret += "auto [" + g.transpileExpression(stmt.Key) + ", "
+			if stmt.Value == nil {
+				ret += fmt.Sprintf("_%v", stmt.TokPos)
+			} else {
+				ret += g.transpileExpression(stmt.Value)
+			}
+			ret += "] : " + g.transpileExpression(stmt.X) + ") "
+		} else {
+			panic("assign ranges not yet supported")
+		}
+		ret += g.transpileStatement(stmt.Body)
+		return ret
 	case *ast.SwitchStmt:
 		ret := "{"
 		if stmt.Init != nil {
@@ -314,8 +322,7 @@ func (g *FileGenerator) transpileStatement(stmt ast.Stmt) string {
 		ret += "}"
 		return ret
 	}
-	//panic(fmt.Errorf("unsupported statement type %T\n", stmt))
-	return fmt.Sprintf("/* %T */", stmt)
+	panic(fmt.Errorf("unsupported statement type %T\n", stmt))
 }
 
 func (g *FileGenerator) transpileFunctionDeclaration(decl *ast.FuncDecl) string {
@@ -328,38 +335,30 @@ func (g *FileGenerator) transpileFunctionDeclaration(decl *ast.FuncDecl) string 
 		first := true
 		ret += "::gostd::Tuple<"
 		for _, field := range decl.Type.Results.List {
-			if !first {
-				ret += ", "
-			}
 			for _ = range field.Names {
+				if !first {
+					ret += ", "
+				}
 				ret += g.transpileTypeExpression(field.Type)
+				first = false
 			}
-			first = false
 		}
 		ret += ">"
 	}
 	ret += fmt.Sprintf(" %v(", decl.Name.Name)
 	first := true
 	for _, field := range decl.Type.Params.List {
-		if !first {
-			ret += ", "
-		}
 		for _, name := range field.Names {
+			if !first {
+				ret += ", "
+			}
 			ret += fmt.Sprintf("%v %v", g.transpileTypeExpression(field.Type), name)
+			first = false
 		}
-		first = false
 	}
 	ret += ")"
 	return ret
 }
-
-type DeclarationClass int
-
-const (
-	HeaderDeclarations DeclarationClass = iota
-	CPPDeclarations
-	AllDeclarations
-)
 
 func (g *FileGenerator) transpileDeclaration(decl ast.Decl, class DeclarationClass) string {
 	switch decl := decl.(type) {
@@ -439,134 +438,5 @@ func (g *FileGenerator) transpileDeclaration(decl ast.Decl, class DeclarationCla
 		ret += "\n"
 		return ret
 	}
-	//panic(fmt.Errorf("unsupported declaration type %T\n", decl))
-	return fmt.Sprintf("/* %T */\n\n", decl)
-}
-
-type HeaderMetadata struct {
-	Include string
-}
-
-func (g *PackageGenerator) TranspileGoFile(f *ast.File, name, pkgDir, pkgPath string) (*HeaderMetadata, error) {
-	include := filepath.Join("gostd", pkgPath, "_"+strings.TrimSuffix(name, ".go")+".hpp")
-	cppFile := filepath.Join(g.SourceDir, pkgPath, strings.TrimSuffix(name, ".go")+".cpp")
-	hppFile := filepath.Join(g.IncludeDir, include)
-
-	os.MkdirAll(filepath.Dir(cppFile), 0700)
-	cpp, err := os.Create(cppFile)
-	if err != nil {
-		return nil, err
-	}
-	defer cpp.Close()
-
-	os.MkdirAll(filepath.Dir(hppFile), 0700)
-	hpp, err := os.Create(hppFile)
-	if err != nil {
-		return nil, err
-	}
-	defer hpp.Close()
-
-	fg := &FileGenerator{
-		TypeInfo:    g.TypeInfo,
-		PackageName: f.Name.Name,
-	}
-
-	fmt.Fprint(cpp, "// THIS FILE WAS GENERATED VIA TRANSPILING. DO NOT MODIFY.\n")
-	fmt.Fprint(cpp, "#include <"+filepath.Join("gostd", pkgPath)+".hpp>\n\n")
-	fmt.Fprint(cpp, "#pragma clang diagnostic push\n")
-	fmt.Fprint(cpp, "#pragma clang diagnostic ignored \"-Wparentheses-equality\"\n\n")
-
-	fmt.Fprint(hpp, "// THIS FILE WAS GENERATED VIA TRANSPILING. DO NOT MODIFY.\n")
-	fmt.Fprint(hpp, "#pragma once\n\n")
-	fmt.Fprint(hpp, "#include <gostd.hpp>\n\n")
-
-	namespace := "gostd::" + strings.Join(strings.Split(pkgPath, "/"), "::")
-
-	fmt.Fprintf(cpp, "namespace %v {\n\n", namespace)
-	fmt.Fprintf(hpp, "namespace %v {\n\n", namespace)
-
-	for _, decl := range f.Decls {
-		if hppDecl := fg.transpileDeclaration(decl, HeaderDeclarations); hppDecl != "" {
-			fmt.Fprint(hpp, hppDecl+"\n")
-		}
-		if cppDecl := fg.transpileDeclaration(decl, CPPDeclarations); cppDecl != "" {
-			fmt.Fprint(cpp, cppDecl+"\n")
-		}
-	}
-
-	fmt.Fprintf(cpp, "} // namespace %v\n", namespace)
-	fmt.Fprintf(hpp, "} // namespace %v\n", namespace)
-
-	fmt.Fprint(cpp, "\n#pragma clang diagnostic pop\n")
-
-	return &HeaderMetadata{
-		Include: include,
-	}, nil
-}
-
-func (g *Generator) TranspilePackage(path string) error {
-	pkg, err := build.Import(path, ".", 0)
-	if err != nil {
-		return err
-	}
-
-	pg := &PackageGenerator{
-		IncludeDir: g.IncludeDir,
-		SourceDir:  g.SourceDir,
-		TypeInfo: &types.Info{
-			Types:  make(map[ast.Expr]types.TypeAndValue),
-			Defs:   make(map[*ast.Ident]types.Object),
-			Uses:   make(map[*ast.Ident]types.Object),
-			Scopes: make(map[ast.Node]*types.Scope),
-		},
-	}
-
-	conf := &types.Config{
-		Importer: importer.Default(),
-	}
-	fset := token.NewFileSet()
-	var files []*ast.File
-	pkgs, err := parser.ParseDir(fset, pkg.Dir, nil, 0)
-	if err != nil {
-		return err
-	}
-	for _, file := range pkgs[pkg.Name].Files {
-		files = append(files, file)
-	}
-	if _, err := conf.Check(pkg.Name, fset, files, pg.TypeInfo); err != nil {
-		return err
-	}
-
-	headers := []*HeaderMetadata{}
-	for fpath, f := range pkgs[pkg.Name].Files {
-		metadata, err := pg.TranspileGoFile(f, filepath.Base(fpath), pkg.Dir, path)
-		if err != nil {
-			return err
-		}
-		headers = append(headers, metadata)
-	}
-
-	hppFile := filepath.Join(g.IncludeDir, "gostd", path+".hpp")
-	hpp, err := os.Create(hppFile)
-	if err != nil {
-		return err
-	}
-	defer hpp.Close()
-
-	fmt.Fprintf(hpp, "// THIS FILE WAS GENERATED VIA TRANSPILING. DO NOT MODIFY.\n")
-	fmt.Fprint(hpp, "#pragma once\n\n")
-	for _, header := range headers {
-		fmt.Fprintf(hpp, "#include <%v>\n", header.Include)
-	}
-	return nil
-}
-
-func main() {
-	g := Generator{
-		IncludeDir: "./include",
-		SourceDir:  "./src",
-	}
-	if err := g.TranspilePackage("unicode/utf8"); err != nil {
-		fmt.Fprintf(os.Stderr, err.Error())
-	}
+	panic(fmt.Errorf("unsupported declaration type %T\n", decl))
 }
