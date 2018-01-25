@@ -51,7 +51,7 @@ struct PathError {
 
 class File {
 public:
-    File(UintPtr fd, String name) : _fd{Int(fd)}, _name{name} {}
+    File(Uintptr fd, String name) : _fd{Int(fd)}, _name{name} {}
     ~File() {
         Close();
     }
@@ -142,7 +142,7 @@ static auto OpenFile(String name, Int flag, FileMode perm) {
         ret.err = New<PathError>("open", name, err);
         return ret;
     }
-    ret.file = New<File>(UintPtr(fd), name);
+    ret.file = New<File>(Uintptr(fd), name);
     return ret;
 }
 

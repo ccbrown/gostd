@@ -116,7 +116,7 @@ public:
     constexpr NumericType operator~() const { return NumericType(~_value); }
 
     constexpr T& value() { return _value; }
-    constexpr T value() const { return _value; }
+    constexpr const T& value() const { return _value; }
 
     template <typename TypeTag> using Type = NumericType<T, TypeTag>;
 
@@ -177,7 +177,7 @@ using Uint = NumericType<unsigned int>;
 using Uint32 = NumericType<cpp::uint32_t>;
 using Int64 = NumericType<cpp::int64_t>;
 using Uint64 = NumericType<cpp::uint64_t>;
-using UintPtr = NumericType<cpp::uintptr_t>;
+using Uintptr = NumericType<cpp::uintptr_t>;
 
 template <typename T>
 struct IsNumericType : cpp::false_type {};

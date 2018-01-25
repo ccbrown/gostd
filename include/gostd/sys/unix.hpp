@@ -12,8 +12,8 @@ extern char** environ;
 
 namespace gostd::sys::unix {
 
-static auto RawSyscall6(UintPtr trap, UintPtr a1, UintPtr a2, UintPtr a3, UintPtr a4, UintPtr a5, UintPtr a6) {
-    struct { UintPtr r1, r2; Errno errno; } ret;
+static auto RawSyscall6(Uintptr trap, Uintptr a1, Uintptr a2, Uintptr a3, Uintptr a4, Uintptr a5, Uintptr a6) {
+    struct { Uintptr r1, r2; Errno errno; } ret;
     auto [r1, r2, errno] = syscall6(trap.value(), a1.value(), a2.value(), a3.value(), a4.value(), a5.value(), a6.value());
     ret.r1 = r1;
     ret.r2 = r2;
@@ -21,15 +21,15 @@ static auto RawSyscall6(UintPtr trap, UintPtr a1, UintPtr a2, UintPtr a3, UintPt
     return ret;
 }
 
-static auto RawSyscall(UintPtr trap, UintPtr a1, UintPtr a2, UintPtr a3) {
+static auto RawSyscall(Uintptr trap, Uintptr a1, Uintptr a2, Uintptr a3) {
     return RawSyscall6(trap, a1, a2, a3, 0, 0, 0);
 }
 
-static auto Syscall(UintPtr trap, UintPtr a1, UintPtr a2, UintPtr a3) {
+static auto Syscall(Uintptr trap, Uintptr a1, Uintptr a2, Uintptr a3) {
     return RawSyscall(trap, a1, a2, a3);
 }
 
-static auto Syscall6(UintPtr trap, UintPtr a1, UintPtr a2, UintPtr a3, UintPtr a4, UintPtr a5, UintPtr a6) {
+static auto Syscall6(Uintptr trap, Uintptr a1, Uintptr a2, Uintptr a3, Uintptr a4, Uintptr a5, Uintptr a6) {
     return RawSyscall6(trap, a1, a2, a3, a4, a5, a6);
 }
 
@@ -59,7 +59,7 @@ static auto Environ() {
 }
 
 static Error Close(Int fd) {
-    auto [r1, r2, errno] = Syscall(SYS_CLOSE, UintPtr(fd), 0, 0);
+    auto [r1, r2, errno] = Syscall(SYS_CLOSE, Uintptr(fd), 0, 0);
     if (errno != 0) {
         return errno;
     }
@@ -68,7 +68,7 @@ static Error Close(Int fd) {
 
 static auto Read(Int fd, Slice<Byte> p) {
     struct { Int n; Error err; } ret;
-    auto [r1, r2, errno] = Syscall(SYS_READ, UintPtr(fd), UintPtr(unsafe::Pointer(&p[0])), UintPtr(Len(p)));
+    auto [r1, r2, errno] = Syscall(SYS_READ, Uintptr(fd), Uintptr(unsafe::Pointer(&p[0])), Uintptr(Len(p)));
     ret.n = Int(r1);
     if (errno != 0) {
         ret.err = errno;
@@ -79,7 +79,7 @@ static auto Read(Int fd, Slice<Byte> p) {
 static auto Write(Int fd, Slice<Byte> p) {
     struct { Int n = 0; Error err; } ret;
     if (Len(p) > 0) {
-        auto [r1, r2, errno] = Syscall(SYS_WRITE, UintPtr(fd), UintPtr(unsafe::Pointer(&p[0])), UintPtr(Len(p)));
+        auto [r1, r2, errno] = Syscall(SYS_WRITE, Uintptr(fd), Uintptr(unsafe::Pointer(&p[0])), Uintptr(Len(p)));
         ret.n = Int(r1);
         if (errno != 0) {
             ret.err = errno;
@@ -90,7 +90,7 @@ static auto Write(Int fd, Slice<Byte> p) {
 
 static auto Seek(Int fd, Int64 offset, Int whence) {
     struct { Int64 off; Error err; } ret;
-    auto [r1, r2, errno] = Syscall(SYS_LSEEK, UintPtr(fd), UintPtr(offset), UintPtr(whence));
+    auto [r1, r2, errno] = Syscall(SYS_LSEEK, Uintptr(fd), Uintptr(offset), Uintptr(whence));
     ret.off = Int64(r1);
     if (errno != 0) {
         ret.err = errno;
@@ -99,7 +99,7 @@ static auto Seek(Int fd, Int64 offset, Int whence) {
 }
 
 static Error Mkdirat(Int dirfd, String path, Uint32 mode) {
-    auto [r1, r2, errno] = Syscall(SYS_MKDIRAT, UintPtr(dirfd), UintPtr(unsafe::Pointer(path.NullTerminated().CString())), UintPtr(mode));
+    auto [r1, r2, errno] = Syscall(SYS_MKDIRAT, Uintptr(dirfd), Uintptr(unsafe::Pointer(path.NullTerminated().CString())), Uintptr(mode));
     if (errno != 0) {
         return errno;
     }
@@ -112,7 +112,7 @@ static auto Mkdir(String path, Uint32 mode) {
 
 static auto Openat(Int dirfd, String path, Int flags, Uint32 mode) {
     struct { Int fd; Error err; } ret;
-    auto [r1, r2, errno] = Syscall6(SYS_OPENAT, UintPtr(dirfd), UintPtr(unsafe::Pointer(path.NullTerminated().CString())), UintPtr(flags), UintPtr(mode), 0, 0);
+    auto [r1, r2, errno] = Syscall6(SYS_OPENAT, Uintptr(dirfd), Uintptr(unsafe::Pointer(path.NullTerminated().CString())), Uintptr(flags), Uintptr(mode), 0, 0);
     ret.fd = Int(r1);
     if (errno != 0) {
         ret.err = errno;
@@ -125,7 +125,7 @@ static auto Open(String path, Int mode, Uint32 perm) {
 }
 
 static Error Unlinkat(Int dirfd, String path, Int flags) {
-    auto [r1, r2, errno] = Syscall(SYS_UNLINKAT, UintPtr(dirfd), UintPtr(unsafe::Pointer(path.NullTerminated().CString())), UintPtr(flags));
+    auto [r1, r2, errno] = Syscall(SYS_UNLINKAT, Uintptr(dirfd), Uintptr(unsafe::Pointer(path.NullTerminated().CString())), Uintptr(flags));
     if (errno != 0) {
         return errno;
     }
@@ -157,7 +157,7 @@ static Error Exec(String argv0, Slice<String> argv, Slice<String> envv) {
     }
     envvp[Len(envv).value()] = nullptr;
 
-    auto [r1, r2, errno] = Syscall(SYS_EXECVE, UintPtr(unsafe::Pointer(argv0.NullTerminated().CString())), UintPtr(unsafe::Pointer(&argvp[0])), UintPtr(unsafe::Pointer(&envvp[0])));
+    auto [r1, r2, errno] = Syscall(SYS_EXECVE, Uintptr(unsafe::Pointer(argv0.NullTerminated().CString())), Uintptr(unsafe::Pointer(&argvp[0])), Uintptr(unsafe::Pointer(&envvp[0])));
     if (errno != 0) {
         return errno;
     }
@@ -210,7 +210,7 @@ struct WaitStatus {
 
 static auto Wait4(Int pid, WaitStatus* wstatus, Int options, Rusage* rusage) {
     struct { Int wpid; Error err; } ret;
-    auto [r1, r2, errno] = Syscall6(SYS_WAIT4, UintPtr(pid), UintPtr(unsafe::Pointer(&wstatus->status)), UintPtr(options), UintPtr(unsafe::Pointer(rusage)), 0, 0);
+    auto [r1, r2, errno] = Syscall6(SYS_WAIT4, Uintptr(pid), Uintptr(unsafe::Pointer(&wstatus->status)), Uintptr(options), Uintptr(unsafe::Pointer(rusage)), 0, 0);
     if (errno != 0) {
         ret.err = errno;
         return ret;
@@ -243,16 +243,16 @@ struct Stat_t {
 };
 
 static Error Lstat(String path, Stat_t* stat) {
-    auto [r1, r2, errno] = Syscall(SYS_LSTAT, UintPtr(unsafe::Pointer(path.NullTerminated().CString())), UintPtr(unsafe::Pointer(stat)), 0);
+    auto [r1, r2, errno] = Syscall(SYS_LSTAT, Uintptr(unsafe::Pointer(path.NullTerminated().CString())), Uintptr(unsafe::Pointer(stat)), 0);
     if (errno != 0) {
         return errno;
     }
     return {};
 }
 
-static auto Getdirentries(Int fd, Slice<Byte> buf, UintPtr* basep) {
+static auto Getdirentries(Int fd, Slice<Byte> buf, Uintptr* basep) {
     struct { Int n = 0; Error err; } ret;
-    auto [r1, r2, errno] = Syscall6(SYS_GETDIRENTRIES64, UintPtr(fd), UintPtr(unsafe::Pointer(&buf[0])), UintPtr(Len(buf)), UintPtr(unsafe::Pointer(basep)), 0, 0);
+    auto [r1, r2, errno] = Syscall6(SYS_GETDIRENTRIES64, Uintptr(fd), Uintptr(unsafe::Pointer(&buf[0])), Uintptr(Len(buf)), Uintptr(unsafe::Pointer(basep)), 0, 0);
     if (errno != 0) {
         ret.err = errno;
     }
@@ -261,7 +261,7 @@ static auto Getdirentries(Int fd, Slice<Byte> buf, UintPtr* basep) {
 }
 
 static Error Chmod(String path, Uint32 mode) {
-    auto [r1, r2, errno] = Syscall(SYS_CHMOD, UintPtr(unsafe::Pointer(path.NullTerminated().CString())), UintPtr(mode), 0);
+    auto [r1, r2, errno] = Syscall(SYS_CHMOD, Uintptr(unsafe::Pointer(path.NullTerminated().CString())), Uintptr(mode), 0);
     if (errno != 0) {
         return errno;
     }

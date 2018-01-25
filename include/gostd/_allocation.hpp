@@ -47,7 +47,7 @@ public:
 
 private:
     struct block {
-        cpp::uint64_t refs;
+        cpp::atomic<cpp::uint64_t> refs;
         T data[0];
     };
 

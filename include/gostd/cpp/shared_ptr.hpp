@@ -1,5 +1,6 @@
 #pragma once
 
+#include <gostd/cpp/atomic.hpp>
 #include <gostd/cpp/cstdint.hpp>
 #include <gostd/cpp/cstdlib.hpp>
 
@@ -48,7 +49,7 @@ public:
 
 private:
     struct info {
-        size_t refs;
+        atomic<size_t> refs;
         void (*deleter)(T*);
     };
 

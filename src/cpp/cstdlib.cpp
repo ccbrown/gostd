@@ -37,7 +37,7 @@ void* malloc(size_t size) {
 
 void free(void* ptr) {
     auto metadata = reinterpret_cast<mallocMetadata*>(ptr) - 1;
-    auto [r1, r2, errno] = unix::syscall6(cpp::uintptr_t(unix::SYS_MUNMAP), UintPtr(unsafe::Pointer(metadata)).value(), metadata->length, 0, 0, 0, 0);
+    auto [r1, r2, errno] = unix::syscall6(cpp::uintptr_t(unix::SYS_MUNMAP), Uintptr(unsafe::Pointer(metadata)).value(), metadata->length, 0, 0, 0, 0);
     if (errno != 0) {
         Panic("unable to free memory");
     }

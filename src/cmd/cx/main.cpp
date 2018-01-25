@@ -5,6 +5,7 @@
 #include <gostd/os.hpp>
 #include <gostd/strconv.hpp>
 #include <gostd/unicode/utf8.hpp>
+#include <gostd/sync/atomic.hpp>
 
 using namespace gostd;
 

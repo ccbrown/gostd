@@ -3,6 +3,7 @@
 // consider this file an umbrella include
 
 #include <gostd/cpp/any.hpp>
+#include <gostd/cpp/atomic.hpp>
 #include <gostd/cpp/cstdint.hpp>
 #include <gostd/cpp/function.hpp>
 #include <gostd/cpp/reflect.hpp>
