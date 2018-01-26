@@ -1,6 +1,7 @@
 package generate
 
 import (
+	"sort"
 	"strings"
 )
 
@@ -104,10 +105,18 @@ func SortHeaderDeclarations(decls []HeaderDeclaration) (result []HeaderDeclarati
 		}
 	}
 
+	var unsorted []HeaderDeclaration
+	for _, decl := range m {
+		unsorted = append(unsorted, decl)
+	}
+	sort.Slice(unsorted, func(a, b int) bool {
+		return unsorted[a].Id() < unsorted[b].Id()
+	})
+
 	sorted := make(map[string]bool)
-	for len(m) > 0 {
+	for len(unsorted) > 0 {
 		didAdd := false
-		for id, decl := range m {
+		for i, decl := range unsorted {
 			canAdd := true
 			for _, dep := range decl.Dependencies() {
 				if _, ok := sorted[dep]; !ok {
@@ -117,8 +126,8 @@ func SortHeaderDeclarations(decls []HeaderDeclaration) (result []HeaderDeclarati
 			}
 			if canAdd {
 				result = append(result, decl)
-				sorted[id] = true
-				delete(m, id)
+				sorted[decl.Id()] = true
+				unsorted = append(unsorted[:i], unsorted[i+1:]...)
 				didAdd = true
 				break
 			}

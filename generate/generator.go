@@ -59,10 +59,9 @@ func (g *Generator) TranspilePackage(path string) error {
 	}
 
 	var declarations []HeaderDeclaration
-	for fpath, f := range pkgs[pkg.Name].Files {
-		if strings.HasSuffix(fpath, "_test.go") {
-			continue
-		}
+	for _, fname := range pkg.GoFiles {
+		fpath := filepath.Join(pkg.Dir, fname)
+		f := pkgs[pkg.Name].Files[fpath]
 		hdrDecls, err := pg.TranspileGoFile(f, filepath.Base(fpath), pkg.Dir, path)
 		if err != nil {
 			return err
