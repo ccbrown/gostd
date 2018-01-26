@@ -82,7 +82,7 @@ func (g *Generator) TranspilePackage(path string) error {
 	namespace := "gostd::" + strings.Join(strings.Split(path, "/"), "::")
 	fmt.Fprintf(hpp, "#pragma once\n\n#include <gostd.hpp>\n\nnamespace %v {\n\n", namespace)
 	for _, declaration := range SortHeaderDeclarations(declarations) {
-		fmt.Fprintf(hpp, "%v\n\n", declaration.Declaration())
+		fmt.Fprintf(hpp, "%v\n", declaration.Declaration())
 	}
 	fmt.Fprint(hpp, "}\n")
 	return nil

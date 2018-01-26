@@ -63,13 +63,13 @@ func (d *StructDeclaration) Declaration() string {
 	}
 	ret += " {\n"
 	for _, fd := range d.FieldDeclarations {
-		ret += fd
+		ret += "    " + fd
 	}
 	for _, md := range d.MemberDeclarations {
-		ret += md.Declaration()
+		ret += "    " + md.Declaration()
 	}
 	if d.Base != "" && !strings.HasPrefix(d.Base, "::gostd::Array") {
-		ret += "template <typename... Args> explicit " + d.Name + "(Args&&... args) : " + d.Base + "(cpp::forward<Args>(args)...) {}"
+		ret += "    template <typename... Args> explicit " + d.Name + "(Args&&... args) : " + d.Base + "(cpp::forward<Args>(args)...) {}\n"
 	}
 	ret += "};\n"
 	return ret
