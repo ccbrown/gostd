@@ -66,7 +66,7 @@ public:
             if (auto free = Cap(_buf) - Len(_buf); free < MinRead) {
                 auto newBuf = _buf;
                 if (_offset+free < MinRead) {
-                    newBuf = Slice<Byte>(Len(_buf) - _offset, 2 * Cap(_buf) + MinRead);
+                    newBuf = Make<Slice<Byte>>(Len(_buf) - _offset, 2 * Cap(_buf) + MinRead);
                 }
                 Copy(newBuf, _buf.Tail(_offset));
                 _buf = newBuf.Head(Len(_buf)-_offset);

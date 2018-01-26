@@ -18,7 +18,7 @@ static String Quote(String s) {
             quotedLength += 3;
         }
     }
-    Slice<Byte> buf(quotedLength);
+    auto buf = Make<Slice<Byte>>(quotedLength);
     auto dest = 0;
     for (Int i = 0; i < Len(s); i++) {
         auto c = s[i];

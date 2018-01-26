@@ -27,7 +27,7 @@ struct File : FileHeader {
     auto parseSymtab(Slice<Byte> symdat, Slice<Byte> strtab, Slice<Byte> cmddat, SymtabCmd* hdr, Int64 offset) {
         struct { Ptr<macho::Symtab> st; Error err; } ret;
         auto bo = ByteOrder;
-        Slice<Symbol> symtab(hdr->Nsyms);
+        auto symtab = Make<Slice<Symbol>>(hdr->Nsyms);
         auto b = New<bytes::Reader>(symdat);
         for (Int i = 0; i < Len(symtab); i++) {
             auto& sym = symtab[i];
@@ -73,7 +73,7 @@ auto NewFile(io::ReaderAt r) {
 
     auto sr = New<io::SectionReader>(r, 0, (Int64(1)<<63)-1);
 
-    Slice<Byte> ident(4);
+    auto ident = Make<Slice<Byte>>(4);
     if (auto [n, err] = r.ReadAt(ident, 0); err) {
         ret.err = err;
         return ret;
@@ -100,7 +100,7 @@ auto NewFile(io::ReaderAt r) {
 
     Int64 offset = f->Magic == Magic64 ? fileHeaderSize64 : fileHeaderSize32;
 
-    Slice<Byte> dat(f->Cmdsz);
+    auto dat = Make<Slice<Byte>>(f->Cmdsz);
     if (auto [_, err] = r.ReadAt(dat, offset); err) {
         ret.err = err;
         return ret;
@@ -134,13 +134,13 @@ auto NewFile(io::ReaderAt r) {
                 ret.err = err;
                 return ret;
             }
-            Slice<Byte> strtab(hdr.Strsize);
+            auto strtab = Make<Slice<Byte>>(hdr.Strsize);
             if (auto [_, err] = r.ReadAt(strtab, Int64(hdr.Stroff)); err) {
                 ret.err = err;
                 return ret;
             }
             auto symsz = f->Magic == Magic64 ? 16 : 12;
-            Slice<Byte> symdat(hdr.Nsyms * symsz);
+            auto symdat = Make<Slice<Byte>>(hdr.Nsyms * symsz);
             if (auto [_, err] = r.ReadAt(symdat, Int64(hdr.Symoff)); err) {
                 ret.err = err;
                 return ret;

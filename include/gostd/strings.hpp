@@ -38,6 +38,15 @@ static Int IndexByte(String s, Byte b) {
     return -1;
 }
 
+static Int LastIndexByte(String s, Byte b) {
+    for (Int i = Len(s) - 1; i >= 0; i--) {
+        if (s[i] == b) {
+            return i;
+        }
+    }
+    return -1;
+}
+
 static Int IndexRune(String s, Rune r) {
     if (r >= 0 && r < unicode::utf8::RuneSelf) {
         return IndexByte(s, Byte(r));

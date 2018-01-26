@@ -58,19 +58,20 @@ func (g *Generator) TranspilePackage(path string) error {
 		return err
 	}
 
-	headers := []*HeaderMetadata{}
+	var declarations []HeaderDeclaration
 	for fpath, f := range pkgs[pkg.Name].Files {
 		if strings.HasSuffix(fpath, "_test.go") {
 			continue
 		}
-		metadata, err := pg.TranspileGoFile(f, filepath.Base(fpath), pkg.Dir, path)
+		hdrDecls, err := pg.TranspileGoFile(f, filepath.Base(fpath), pkg.Dir, path)
 		if err != nil {
 			return err
 		}
-		headers = append(headers, metadata)
+		declarations = append(declarations, hdrDecls...)
 	}
 
 	hppFile := filepath.Join(g.IncludeDir, "gostd", path+".hpp")
+	os.MkdirAll(filepath.Dir(hppFile), 0700)
 	hpp, err := os.Create(hppFile)
 	if err != nil {
 		return err
@@ -78,9 +79,11 @@ func (g *Generator) TranspilePackage(path string) error {
 	defer hpp.Close()
 
 	fmt.Fprintf(hpp, "// THIS FILE WAS GENERATED VIA TRANSPILING. DO NOT MODIFY.\n")
-	fmt.Fprint(hpp, "#pragma once\n\n")
-	for _, header := range headers {
-		fmt.Fprintf(hpp, "#include <%v>\n", header.Include)
+	namespace := "gostd::" + strings.Join(strings.Split(path, "/"), "::")
+	fmt.Fprintf(hpp, "#pragma once\n\n#include <gostd.hpp>\n\nnamespace %v {\n\n", namespace)
+	for _, declaration := range SortHeaderDeclarations(declarations) {
+		fmt.Fprintf(hpp, "%v\n\n", declaration.Declaration())
 	}
+	fmt.Fprint(hpp, "}\n")
 	return nil
 }

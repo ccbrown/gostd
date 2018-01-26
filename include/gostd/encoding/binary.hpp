@@ -132,7 +132,7 @@ struct numericType {
 
 template <typename T>
 Error Read(io::Reader r, ByteOrder order, T* data) {
-    Slice<Byte> buf(dataType<T>::serializedSize());
+    auto buf = Make<Slice<Byte>>(dataType<T>::serializedSize());
     if (auto [n, err] = io::ReadFull(r, buf); err) {
         return err;
     }

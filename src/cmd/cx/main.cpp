@@ -10,7 +10,7 @@
 using namespace gostd;
 
 int main(int argc, const char* argv[]) {
-    Slice<String> args(argc);
+    auto args = Make<Slice<String>>(argc);
     for (int i = 0; i < argc; ++i) {
         args[i] = argv[i];
     }

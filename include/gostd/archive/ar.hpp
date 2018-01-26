@@ -55,7 +55,7 @@ private:
 
     Error _readArchiveHeader() {
         const char expected[] = "!<arch>\n";
-        Slice<Byte> buf(sizeof(expected) - 1);
+        auto buf = Make<Slice<Byte>>(sizeof(expected) - 1);
         if (auto [n, err] = io::ReadFull(_r, buf); err) {
             return err;
         }
@@ -90,7 +90,7 @@ private:
             }
         }
 
-        Slice<Byte> buf(16 + 12 + 6 + 6 + 8 + 10 + 1 + 1);
+        auto buf = Make<Slice<Byte>>(16 + 12 + 6 + 6 + 8 + 10 + 1 + 1);
 
         if (auto [n, err] = io::ReadFull(_r, buf); err) {
             return {{}, err};
@@ -145,7 +145,7 @@ private:
         if (strings::HasPrefix(header->Name, "#1/")) {
             auto [nlen, err] = strconv::ParseInt(header->Name.Tail(3), 10, 32);
             if (!err) {
-                Slice<Byte> buf(nlen);
+                auto buf = Make<Slice<Byte>>(nlen);
                 if (auto [_, err] = io::ReadFull(_r, buf); !err) {
                     header->Name = String(bytes::TrimRight(buf, "\0"));
                     header->Size -= nlen;

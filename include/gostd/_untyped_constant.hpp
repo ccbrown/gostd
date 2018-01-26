@@ -6,6 +6,9 @@ namespace gostd {
 
 class UntypedConstant {
 public:
+    template <cpp::size_t N>
+    constexpr explicit UntypedConstant(const char(&s)[N]) : _str{s}, _strlen(N) {}
+
     template <typename T, typename = typename cpp::enable_if<cpp::is_integral<T>::value && cpp::is_unsigned<T>::value>::type>
     constexpr explicit UntypedConstant(T n, char x = 0) : _sign{n ? 1 : 0}, _abs{n} {}
 
@@ -48,6 +51,22 @@ public:
     constexpr bool operator>(T right) const { return *this >= right && *this != right; }
 
     template <typename T, typename = typename cpp::enable_if<cpp::is_integral<T>::value>::type>
+    constexpr auto operator+(T right) const { return *this + UntypedConstant(right); }
+
+    constexpr UntypedConstant operator+(UntypedConstant right) const {
+        if (_sign == 0) {
+            return right;
+        } else if (_sign == right._sign) {
+            return UntypedConstant(_sign, _abs + right._abs);
+        } else if (right._abs > _abs) {
+            return UntypedConstant(-_sign, right._abs - _abs);
+        } else if (right._abs < _abs) {
+            return UntypedConstant(_sign, _abs - right._abs);
+        }
+        return UntypedConstant(0, 0);
+    }
+
+    template <typename T, typename = typename cpp::enable_if<cpp::is_integral<T>::value>::type>
     constexpr auto operator&(T right) const { return UntypedConstant(_abs & right); }
     constexpr auto operator&(UntypedConstant right) const { return UntypedConstant(_abs & right._abs); }
 
@@ -59,8 +78,12 @@ public:
     explicit constexpr operator T() const { return _sign < 0 ? T(-_abs) : T(_abs); }
 
 private:
+    constexpr UntypedConstant(int sign, cpp::uint64_t abs) : _sign{sign}, _abs(abs) {}
+
     const int _sign = 0;
     const cpp::uint64_t _abs = 0;
+    const char* const _str = nullptr;
+    const cpp::size_t _strlen = 0;
 };
 
 template <typename T> constexpr bool operator<(T left, UntypedConstant right) { return right > left; }

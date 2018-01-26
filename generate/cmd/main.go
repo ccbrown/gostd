@@ -12,7 +12,7 @@ func main() {
 		IncludeDir: "./include",
 		SourceDir:  "./src",
 	}
-	for _, pkg := range []string{"unicode/utf8", "unicode/utf16"} {
+	for _, pkg := range []string{"unicode", "unicode/utf8", "unicode/utf16"} {
 		if err := g.TranspilePackage(pkg); err != nil {
 			fmt.Fprintf(os.Stderr, err.Error())
 		}

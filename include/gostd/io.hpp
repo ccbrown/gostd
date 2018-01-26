@@ -104,7 +104,7 @@ static auto ReadAtLeast(Reader r, Slice<Byte> buf, Int min) {
 
 static auto Copy(Writer dst, Reader src) {
     struct { Int64 written = 0; Error err; } ret;
-    Slice<Byte> buf(32*1024);
+    auto buf = Make<Slice<Byte>>(32*1024);
     while (true) {
         auto [n, err] = src.Read(buf);
         if (n > 0) {

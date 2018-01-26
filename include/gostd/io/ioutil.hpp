@@ -20,7 +20,7 @@ static String nextSuffix() {
 
 static auto ReadAll(Reader r) {
     struct { Slice<Byte> buf; Error err; } ret;
-    auto buf = New<bytes::Buffer>(Slice<Byte>(0, bytes::MinRead));
+    auto buf = New<bytes::Buffer>(Make<Slice<Byte>>(0, bytes::MinRead));
     auto [_, err] = buf->ReadFrom(r);
     ret.buf = buf->Bytes();
     ret.err = err;

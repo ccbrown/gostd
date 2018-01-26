@@ -141,16 +141,16 @@ static Error Rmdir(String path) {
 }
 
 static Error Exec(String argv0, Slice<String> argv, Slice<String> envv) {
-    Slice<String> argvz(Len(argv));
-    Slice<const char*> argvp(Len(argv) + 1);
+    auto argvz = Make<Slice<String>>(Len(argv));
+    auto argvp = Make<Slice<const char*>>(Len(argv) + 1);
     for (int i = 0; i < Len(argv); ++i) {
         argvz[i] = argv[i].NullTerminated();
         argvp[i] = argvz[i].CString();
     }
     argvp[Len(argv).value()] = nullptr;
 
-    Slice<String> envvz(Len(envv));
-    Slice<const char*> envvp(Len(envv) + 1);
+    auto envvz = Make<Slice<String>>(Len(envv));
+    auto envvp = Make<Slice<const char*>>(Len(envv) + 1);
     for (int i = 0; i < Len(envv); ++i) {
         envvz[i] = envv[i].NullTerminated();
         envvp[i] = envvz[i].CString();

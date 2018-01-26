@@ -64,7 +64,7 @@ template <typename T> Int Cap(T&& v) { return v.cap(); }
 
 template <typename T, typename... Args>
 T Make(Args... args) {
-    return T(args...);
+    return T::Make(args...);
 }
 
 class Defer {
@@ -80,6 +80,7 @@ private:
 
 #include <gostd/_array.hpp>
 #include <gostd/_error.hpp>
+#include <gostd/_map.hpp>
 #include <gostd/_tuple.hpp>
 #include <gostd/_slice.hpp>
 #include <gostd/_string.hpp>

@@ -9,20 +9,14 @@ import (
 	"strings"
 )
 
-type HeaderMetadata struct {
-	Include string
-}
-
 type PackageGenerator struct {
 	IncludeDir string
 	SourceDir  string
 	TypeInfo   *types.Info
 }
 
-func (g *PackageGenerator) TranspileGoFile(f *ast.File, name, pkgDir, pkgPath string) (*HeaderMetadata, error) {
-	include := filepath.Join("gostd", pkgPath, "_"+strings.TrimSuffix(name, ".go")+".hpp")
+func (g *PackageGenerator) TranspileGoFile(f *ast.File, name, pkgDir, pkgPath string) ([]HeaderDeclaration, error) {
 	cppFile := filepath.Join(g.SourceDir, pkgPath, strings.TrimSuffix(name, ".go")+".cpp")
-	hppFile := filepath.Join(g.IncludeDir, include)
 
 	os.MkdirAll(filepath.Dir(cppFile), 0700)
 	cpp, err := os.Create(cppFile)
@@ -30,13 +24,6 @@ func (g *PackageGenerator) TranspileGoFile(f *ast.File, name, pkgDir, pkgPath st
 		return nil, err
 	}
 	defer cpp.Close()
-
-	os.MkdirAll(filepath.Dir(hppFile), 0700)
-	hpp, err := os.Create(hppFile)
-	if err != nil {
-		return nil, err
-	}
-	defer hpp.Close()
 
 	fg := &FileGenerator{
 		TypeInfo:    g.TypeInfo,
@@ -48,30 +35,24 @@ func (g *PackageGenerator) TranspileGoFile(f *ast.File, name, pkgDir, pkgPath st
 	fmt.Fprint(cpp, "#pragma clang diagnostic push\n")
 	fmt.Fprint(cpp, "#pragma clang diagnostic ignored \"-Wparentheses-equality\"\n\n")
 
-	fmt.Fprint(hpp, "// THIS FILE WAS GENERATED VIA TRANSPILING. DO NOT MODIFY.\n")
-	fmt.Fprint(hpp, "#pragma once\n\n")
-	fmt.Fprint(hpp, "#include <gostd.hpp>\n\n")
-
 	namespace := "gostd::" + strings.Join(strings.Split(pkgPath, "/"), "::")
 
 	fmt.Fprintf(cpp, "namespace %v {\n\n", namespace)
-	fmt.Fprintf(hpp, "namespace %v {\n\n", namespace)
+
+	var declarations []HeaderDeclaration
 
 	for _, decl := range f.Decls {
-		if hppDecl := fg.transpileDeclaration(decl, HeaderDeclarations); hppDecl != "" {
-			fmt.Fprint(hpp, hppDecl+"\n")
+		if hppDecls := fg.transpileHeaderDeclaration(decl); hppDecls != nil {
+			declarations = append(declarations, hppDecls...)
 		}
-		if cppDecl := fg.transpileDeclaration(decl, CPPDeclarations); cppDecl != "" {
+		if cppDecl := fg.transpileDeclaration(decl, true); cppDecl != "" {
 			fmt.Fprint(cpp, cppDecl+"\n")
 		}
 	}
 
 	fmt.Fprintf(cpp, "} // namespace %v\n", namespace)
-	fmt.Fprintf(hpp, "} // namespace %v\n", namespace)
 
 	fmt.Fprint(cpp, "\n#pragma clang diagnostic pop\n")
 
-	return &HeaderMetadata{
-		Include: include,
-	}, nil
+	return declarations, nil
 }

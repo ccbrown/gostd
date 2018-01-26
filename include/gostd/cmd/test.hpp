@@ -99,6 +99,10 @@ static auto parseSymbol(String s) {
         return ret;
     }
 
+    if (auto colon = strings::LastIndexByte(name, ':'); !strings::HasPrefix(colon > 0 ? name.Tail(colon + 1) : name, "Test")) {
+        return ret;
+    }
+
     ret.test.Name = name;
     ret.ok = true;
     return ret;

@@ -10,14 +10,13 @@ class Slice {
 public:
     constexpr Slice() {}
 
-    template <typename N>
-    explicit Slice(N len, typename cpp::enable_if<cpp::is_integral<N>::value>::type* = 0) : _data(Uint64(len)), _len{Int(len)} {}
-
-    template <typename N, typename NTag>
-    explicit Slice(NumericType<N, NTag> len) : _data(Uint64(len)), _len{Int(len)} {}
-
-    template <typename N, typename M>
-    Slice(N len, M cap) : _data(Uint64(cap) >= Uint64(len) ? Uint64(cap) : Uint64(len)), _len{Int(len)} {}
+    template <typename N, typename M = Int>
+    static Slice<T> Make(N len, M cap = 0) {
+        Slice<T> ret;
+        ret._data = allocation<T>(Uint64(cap) >= Uint64(len) ? Uint64(cap) : Uint64(len));
+        ret._len = Int(len);
+        return ret;
+    }
 
     template <typename... Rem>
     explicit Slice(T next, Rem&&... rem) : _data(1 + sizeof...(rem)), _len{1} {
@@ -78,7 +77,7 @@ public:
             Copy(ret.Tail(_len), elements);
             return ret;
         }
-        auto ret = Slice(_len + elements.len(), _len + (_len >= elements.len() ? _len : elements.len()));
+        auto ret = Make(_len + elements.len(), _len + (_len >= elements.len() ? _len : elements.len()));
         Copy(ret, *this);
         Copy(ret.Tail(_len), elements);
         return ret;
@@ -92,7 +91,7 @@ public:
             _data[_len] = cpp::move(element);
             return Slice(_data, _pos, _len + 1)._sliceWithSuffix(cpp::forward<Rem>(rem)...);
         }
-        auto ret = Slice(_len + 1, _len + (_len >= 1 + sizeof...(rem) ? _len : (1 + sizeof...(rem))));
+        auto ret = Make(_len + 1, _len + (_len >= 1 + sizeof...(rem) ? _len : (1 + sizeof...(rem))));
         Copy(ret, *this);
         ret[_len] = cpp::move(element);
         return ret._sliceWithSuffix(cpp::forward<Rem>(rem)...);
@@ -120,7 +119,8 @@ private:
 
     template <typename... Rem>
     void _append(T next, Rem&&... rem) {
-        _data[_len++] = cpp::move(next);
+        _data[_len] = cpp::move(next);
+        _len++;
         _append(cpp::forward<Rem>(rem)...);
     }
 
