@@ -18,7 +18,7 @@ type Generator struct {
 	SourceDir  string
 }
 
-func (g *Generator) TranspilePackage(path string) error {
+func (g *Generator) TranspilePackage(path string, includeTests bool) error {
 	pkg, err := build.Import(path, ".", 0)
 	if err != nil {
 		return err
@@ -31,45 +31,94 @@ func (g *Generator) TranspilePackage(path string) error {
 		return err
 	}
 
+	declarations, err := g.transpileFiles(pkg, pkg.GoFiles)
+	if err != nil {
+		return err
+	}
+
+	if err := g.writeHPPFile(path, declarations, pkg.Imports); err != nil {
+		return err
+	}
+
+	if includeTests {
+		if len(pkg.XTestGoFiles) > 0 {
+			declarations, err := g.transpileFiles(pkg, pkg.XTestGoFiles)
+			if err != nil {
+				return err
+			}
+
+			if err := g.writeHPPFile(path+"_test", declarations, pkg.XTestImports); err != nil {
+				return err
+			}
+		}
+	}
+
+	return nil
+}
+
+func (g *Generator) transpileFiles(pkg *build.Package, fileNames []string) ([]HeaderDeclaration, error) {
 	pg := &PackageGenerator{
 		IncludeDir: g.IncludeDir,
 		SourceDir:  g.SourceDir,
 		TypeInfo: &types.Info{
-			Types:  make(map[ast.Expr]types.TypeAndValue),
-			Defs:   make(map[*ast.Ident]types.Object),
-			Uses:   make(map[*ast.Ident]types.Object),
-			Scopes: make(map[ast.Node]*types.Scope),
+			Types:      make(map[ast.Expr]types.TypeAndValue),
+			Defs:       make(map[*ast.Ident]types.Object),
+			Uses:       make(map[*ast.Ident]types.Object),
+			Selections: make(map[*ast.SelectorExpr]*types.Selection),
+			Scopes:     make(map[ast.Node]*types.Scope),
 		},
+	}
+
+	fset := token.NewFileSet()
+	asts, err := parser.ParseDir(fset, pkg.Dir, nil, 0)
+	if err != nil {
+		return nil, err
+	}
+
+	var files []*ast.File
+	var filePaths []string
+	pkgName := pkg.Name
+	for _, pkgAst := range asts {
+		for fpath, file := range pkgAst.Files {
+			match := false
+			for _, fname := range fileNames {
+				if fpath == filepath.Join(pkg.Dir, fname) {
+					match = true
+					break
+				}
+			}
+			if match {
+				pkgName = file.Name.Name
+				files = append(files, file)
+				filePaths = append(filePaths, fpath)
+			}
+		}
+		if files != nil {
+			break
+		}
 	}
 
 	conf := &types.Config{
 		Importer: importer.Default(),
 	}
-	fset := token.NewFileSet()
-	var files []*ast.File
-	pkgs, err := parser.ParseDir(fset, pkg.Dir, nil, 0)
-	if err != nil {
-		return err
-	}
-	for _, file := range pkgs[pkg.Name].Files {
-		files = append(files, file)
-	}
-	if _, err := conf.Check(pkg.Name, fset, files, pg.TypeInfo); err != nil {
-		return err
+	if _, err := conf.Check(pkgName, fset, files, pg.TypeInfo); err != nil {
+		return nil, err
 	}
 
 	var declarations []HeaderDeclaration
-	for _, fname := range pkg.GoFiles {
-		fpath := filepath.Join(pkg.Dir, fname)
-		f := pkgs[pkg.Name].Files[fpath]
-		hdrDecls, err := pg.TranspileGoFile(f, filepath.Base(fpath), pkg.Dir, path)
+	for i, f := range files {
+		hdrDecls, err := pg.TranspileGoFile(f, filepath.Base(filePaths[i]), pkg.Dir, pkg.ImportPath)
 		if err != nil {
-			return err
+			return nil, err
 		}
 		declarations = append(declarations, hdrDecls...)
 	}
 
-	hppFile := filepath.Join(g.IncludeDir, "gostd", path+".hpp")
+	return declarations, nil
+}
+
+func (g *Generator) writeHPPFile(pkgPath string, declarations []HeaderDeclaration, imports []string) error {
+	hppFile := filepath.Join(g.IncludeDir, "gostd", pkgPath+".hpp")
 	os.MkdirAll(filepath.Dir(hppFile), 0700)
 	hpp, err := os.Create(hppFile)
 	if err != nil {
@@ -78,8 +127,12 @@ func (g *Generator) TranspilePackage(path string) error {
 	defer hpp.Close()
 
 	fmt.Fprintf(hpp, "// THIS FILE WAS GENERATED VIA TRANSPILING. DO NOT MODIFY.\n")
-	namespace := "gostd::" + strings.Join(strings.Split(path, "/"), "::")
-	fmt.Fprintf(hpp, "#pragma once\n\n#include <gostd.hpp>\n\nnamespace %v {\n\n", namespace)
+	namespace := "gostd::" + strings.Join(strings.Split(pkgPath, "/"), "::")
+	fmt.Fprint(hpp, "#pragma once\n\n#include <gostd.hpp>\n")
+	for _, pkg := range imports {
+		fmt.Fprint(hpp, "#include <gostd/"+pkg+".hpp>\n")
+	}
+	fmt.Fprintf(hpp, "\nnamespace %v {\n\n", namespace)
 	for _, declaration := range SortHeaderDeclarations(declarations) {
 		fmt.Fprintf(hpp, "%v\n", declaration.Declaration())
 	}

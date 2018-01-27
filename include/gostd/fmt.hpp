@@ -72,6 +72,12 @@ auto Print(Args... args) {
     return Fprint(os::Stdout, args...);
 }
 
+template <typename... Args>
+auto Printf(Args... args) {
+    // TODO
+    return Fprint(os::Stdout, args...);
+}
+
 template <typename Writer, typename... Args>
 auto Fprintln(Writer w, Args... args) {
     struct { Int n; Error err; } ret;

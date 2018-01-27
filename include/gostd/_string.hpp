@@ -1,12 +1,19 @@
 #pragma once
 
+#include <gostd/_tuple.hpp>
+#include <gostd/_untyped_constant.hpp>
+
 namespace gostd {
 
 class String {
 public:
     constexpr String() : _pos{0}, _len{0} {}
 
-    String(const char* s) : String(s, cpp::strlen(s)) {}
+    template <typename T, typename = typename cpp::enable_if<cpp::is_same<T, char*>::value || cpp::is_same<T, const char*>::value>::type>
+    String(T s) : String(s, cpp::strlen(s)) {}
+
+    template <cpp::size_t N>
+    String(const char(&s)[N]) : String(s, N - 1) {}
 
     String(const char* s, cpp::size_t len) : _pos{0}, _len{Int(len)} {
         _data = allocation<Byte>(Uint64(_len) + 1);
@@ -15,6 +22,8 @@ public:
         }
         _data[_len] = 0;
     }
+
+    String(UntypedConstant c) : String(c.CString(), c.CStringLength()) {}
 
     template <typename N>
     constexpr Byte operator[](N i) const {
@@ -91,6 +100,18 @@ public:
         }
         return reinterpret_cast<const char*>(&_data[_pos]);
     }
+
+    struct iterator {
+        String* string;
+        Int offset;
+
+        bool operator!=(const iterator& other) const { return offset != other.offset; }
+        iterator& operator++();
+        Tuple<Int, Rune> operator*() const;
+    };
+
+    iterator begin() { return {this, 0}; }
+    iterator end() { return {this, _len}; }
 
 private:
     String(allocation<Byte> data, Int pos, Int len) : _data{data}, _pos{pos}, _len{len} {}

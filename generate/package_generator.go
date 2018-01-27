@@ -30,12 +30,13 @@ func (g *PackageGenerator) TranspileGoFile(f *ast.File, name, pkgDir, pkgPath st
 		PackageName: f.Name.Name,
 	}
 
+	includePath := filepath.Join(filepath.Dir(pkgPath), f.Name.Name)
 	fmt.Fprint(cpp, "// THIS FILE WAS GENERATED VIA TRANSPILING. DO NOT MODIFY.\n")
-	fmt.Fprint(cpp, "#include <"+filepath.Join("gostd", pkgPath)+".hpp>\n\n")
+	fmt.Fprint(cpp, "#include <"+filepath.Join("gostd", includePath)+".hpp>\n\n")
 	fmt.Fprint(cpp, "#pragma clang diagnostic push\n")
 	fmt.Fprint(cpp, "#pragma clang diagnostic ignored \"-Wparentheses-equality\"\n\n")
 
-	namespace := "gostd::" + strings.Join(strings.Split(pkgPath, "/"), "::")
+	namespace := "gostd::" + strings.Join(strings.Split(includePath, "/"), "::")
 
 	fmt.Fprintf(cpp, "namespace %v {\n\n", namespace)
 

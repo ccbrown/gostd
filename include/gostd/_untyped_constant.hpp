@@ -7,7 +7,7 @@ namespace gostd {
 class UntypedConstant {
 public:
     template <cpp::size_t N>
-    constexpr explicit UntypedConstant(const char(&s)[N]) : _str{s}, _strlen(N) {}
+    constexpr explicit UntypedConstant(const char(&s)[N]) : _str{s}, _strlen(N - 1) {}
 
     template <typename T, typename = typename cpp::enable_if<cpp::is_integral<T>::value && cpp::is_unsigned<T>::value>::type>
     constexpr explicit UntypedConstant(T n, char x = 0) : _sign{n ? 1 : 0}, _abs{n} {}
@@ -17,6 +17,9 @@ public:
 
     constexpr cpp::uint64_t Abs() const { return _abs; }
     constexpr int Sign() const { return _sign; }
+
+    constexpr const char* CString() const { return _str; }
+    constexpr cpp::size_t CStringLength() const { return _strlen; }
 
     template <typename T, typename = typename cpp::enable_if<cpp::is_integral<T>::value>::type>
     constexpr bool operator<(T right) const {
@@ -37,9 +40,21 @@ public:
         }
         return right >= 0 && cpp::uint64_t(right) == _abs;
     }
+    constexpr bool operator==(UntypedConstant right) const {
+        if (_sign != right._sign || _abs != right._abs || _strlen != right._strlen) {
+            return false;
+        }
+        for (cpp::size_t i = 0; i < _strlen; ++i) {
+            if (_str[i] != right._str[i]) {
+                return false;
+            }
+        }
+        return true;
+    }
 
     template <typename T, typename = typename cpp::enable_if<cpp::is_integral<T>::value>::type>
     constexpr bool operator!=(T right) const { return !(*this == right); }
+    constexpr bool operator!=(UntypedConstant right) const { return !(*this == right); }
 
     template <typename T, typename = typename cpp::enable_if<cpp::is_integral<T>::value>::type>
     constexpr bool operator>=(T right) const { return !(*this < right); }
@@ -91,6 +106,7 @@ template <typename T> constexpr bool operator>(T left, UntypedConstant right) { 
 template <typename T> constexpr bool operator<=(T left, UntypedConstant right) { return right >= left; }
 template <typename T> constexpr bool operator>=(T left, UntypedConstant right) { return right <= left; }
 template <typename T> constexpr bool operator==(T left, UntypedConstant right) { return right == left; }
+template <typename T> constexpr bool operator!=(T left, UntypedConstant right) { return right != left; }
 
 template <typename T, typename = typename cpp::enable_if<!cpp::is_same<T, UntypedConstant>::value>::type>
 constexpr T operator&(T left, UntypedConstant right) { return right & left; }

@@ -23,7 +23,7 @@ func (g *FileGenerator) namespaceForPackage(pkg string) string {
 	if pkg == g.PackageName {
 		return ""
 	}
-	panic(fmt.Errorf("unknown namespace for %v", pkg))
+	return "::gostd::" + strings.Join(strings.Split(pkg, "/"), "::")
 }
 
 func (g *FileGenerator) transpileTypeExpression(expr ast.Expr) string {
@@ -84,7 +84,7 @@ func (g *FileGenerator) transpileExpression(expr ast.Expr) string {
 				} else if c >= 0x20 && c <= 0x7e {
 					ret += string(c)
 				} else {
-					ret += fmt.Sprintf(`\x%02x`, c)
+					ret += fmt.Sprintf(`\x%02x""`, c)
 				}
 			}
 			return ret + `"`
@@ -105,7 +105,7 @@ func (g *FileGenerator) transpileExpression(expr ast.Expr) string {
 		}
 		switch t := t.(type) {
 		case *types.Array:
-			ret += "{"
+			ret += "("
 			values := make([]ast.Expr, t.Len())
 			i := int64(0)
 			for _, e := range expr.Elts {
@@ -127,7 +127,7 @@ func (g *FileGenerator) transpileExpression(expr ast.Expr) string {
 				}
 				ret += g.transpileType(t.Elem()) + "(" + g.transpileExpression(v) + ")"
 			}
-			ret += "}"
+			ret += ")"
 			return ret
 		case *types.Map:
 			ret += "("
@@ -175,7 +175,7 @@ func (g *FileGenerator) transpileExpression(expr ast.Expr) string {
 				switch obj.Name() {
 				case "bool", "string", "int", "int8", "int16", "int32", "int64", "uint", "uint8",
 					"uint16", "uint32", "uint64", "uintptr", "byte", "rune", "float32", "float64",
-					"complex64", "complex128", "len", "append":
+					"complex64", "complex128", "len", "cap", "append", "panic":
 					return "::gostd::" + strings.Title(obj.Name())
 				case "iota":
 					return fmt.Sprintf("%v", g.iotaValue)
@@ -190,6 +190,8 @@ func (g *FileGenerator) transpileExpression(expr ast.Expr) string {
 				if obj.Parent() != nil && obj.Parent().Parent() == types.Universe {
 					g.trackDependencyDeclarationId(obj.Name())
 				}
+			} else {
+				return g.namespaceForPackage(obj.Pkg().Path()) + "::" + expr.Name
 			}
 		}
 		return expr.Name
@@ -205,7 +207,7 @@ func (g *FileGenerator) transpileExpression(expr ast.Expr) string {
 	case *ast.SliceExpr:
 		exprs := g.transpileExpressions([]ast.Expr{expr.X, expr.Low, expr.High, expr.Max})
 		ret := exprs[0]
-		if expr.Max != nil {
+		if expr.High != nil {
 			ret += fmt.Sprintf(".Head(%v)", exprs[2])
 		}
 		if expr.Low != nil {
@@ -221,6 +223,12 @@ func (g *FileGenerator) transpileExpression(expr ast.Expr) string {
 		}
 		return expr.Op.String() + g.transpileExpression(expr.X)
 	case *ast.SelectorExpr:
+		if id, ok := expr.X.(*ast.Ident); ok {
+			if pkgName, ok := g.TypeInfo.Uses[id].(*types.PkgName); ok {
+				namespace := g.namespaceForPackage(pkgName.Imported().Path())
+				return namespace + "::" + expr.Sel.Name
+			}
+		}
 		op := "."
 		t := g.TypeInfo.Types[expr.X].Type
 		if _, ok := t.(*types.Pointer); ok {
@@ -257,10 +265,33 @@ func (g *FileGenerator) transpileStatement(stmt ast.Stmt) string {
 		}
 		ret := ""
 		if len(stmt.Lhs) > 1 {
-			ret += fmt.Sprintf("auto [%v]", strings.Join(left, ", "))
+			bindings := make([]string, len(stmt.Lhs))
+			for i, expr := range stmt.Lhs {
+				if id, ok := expr.(*ast.Ident); ok && g.TypeInfo.Defs[id] != nil {
+					bindings[i] = left[i]
+				} else {
+					bindings[i] = fmt.Sprintf("_binding%v", expr.Pos())
+				}
+			}
+			ret += fmt.Sprintf("auto [%v] = %v", strings.Join(bindings, ", "), strings.Join(right, ", "))
+			for i, binding := range bindings {
+				if binding != left[i] {
+					ret += "; " + left[i] + " = " + binding
+				}
+			}
+			return ret
 		} else if isDeclaration {
-			if g.TypeInfo.Types[stmt.Rhs[0]].Value != nil {
-				ret += fmt.Sprintf("::gostd::Int %v", left[0])
+			if c := g.TypeInfo.Types[stmt.Rhs[0]].Value; c != nil {
+				switch c.Kind() {
+				case constant.Bool:
+					ret += fmt.Sprintf("::gostd::Bool %v", left[0])
+				case constant.Int:
+					ret += fmt.Sprintf("::gostd::Int %v", left[0])
+				case constant.String:
+					ret += fmt.Sprintf("::gostd::String %v", left[0])
+				default:
+					panic(fmt.Sprintf("unsupported constant: %v", c))
+				}
 			} else {
 				ret += fmt.Sprintf("auto %v", left[0])
 			}
@@ -283,6 +314,8 @@ func (g *FileGenerator) transpileStatement(stmt ast.Stmt) string {
 		case token.FALLTHROUGH:
 			return "goto " + g.fallthroughLabel
 		}
+	case *ast.ExprStmt:
+		return g.transpileExpression(stmt.X)
 	case *ast.ForStmt:
 		ret := "for ("
 		if stmt.Init != nil {
@@ -322,6 +355,7 @@ func (g *FileGenerator) transpileStatement(stmt ast.Stmt) string {
 				return "return " + exprs[0]
 			}
 		}
+		return "return"
 	case *ast.BlockStmt:
 		ret := "{\n"
 		for _, stmt := range stmt.List {
@@ -401,7 +435,7 @@ func (g *FileGenerator) transpileStatement(stmt ast.Stmt) string {
 
 func (g *FileGenerator) transpileFunctionDeclaration(decl *ast.FuncDecl, withStructPrefix bool) string {
 	ret := ""
-	if len(decl.Type.Results.List) == 0 {
+	if decl.Type.Results == nil || len(decl.Type.Results.List) == 0 {
 		ret += "void"
 	} else if len(decl.Type.Results.List) == 1 && len(decl.Type.Results.List[0].Names) <= 1 {
 		ret += g.transpileTypeExpression(decl.Type.Results.List[0].Type)
@@ -591,18 +625,22 @@ func (g *FileGenerator) transpileDeclaration(decl ast.Decl, hasHeaderDeclaration
 				}
 			}
 			return ret
+		case token.IMPORT:
+			return ""
 		}
 	case *ast.FuncDecl:
 		ret := g.transpileFunctionDeclaration(decl, true)
 		ret += " "
 		hasNamedReturnValues := false
-		for _, field := range decl.Type.Results.List {
-			for _, name := range field.Names {
-				if !hasNamedReturnValues {
-					ret += "{\n"
+		if decl.Type.Results != nil {
+			for _, field := range decl.Type.Results.List {
+				for _, name := range field.Names {
+					if !hasNamedReturnValues {
+						ret += "{\n"
+					}
+					hasNamedReturnValues = true
+					ret += g.transpileTypeExpression(field.Type) + " " + name.Name + ";\n"
 				}
-				hasNamedReturnValues = true
-				ret += g.transpileTypeExpression(field.Type) + " " + name.Name + ";\n"
 			}
 		}
 		if decl.Recv != nil && decl.Recv.List[0].Names != nil {

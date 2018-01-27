@@ -19,6 +19,7 @@ static void showUsage() {
 struct Test {
     String Symbol;
     String Name;
+    bool UsesRawPointer;
 };
 
 static auto numericPrefix(String s) {
@@ -36,36 +37,42 @@ static auto numericPrefix(String s) {
     return ret;
 }
 
-static auto parseMangledName(String s, String s_ = "") {
-    struct { String name; String suffix; } ret;
+static Tuple<String, String> parseMangledName(String s, String s_ = "") {
     if (!strings::HasPrefix(s, "N")) {
-        return ret;
+        return {};
     }
     s = s.Tail(1);
 
     String name = "";
-    if (strings::HasPrefix(s, "S_") && s_ != "") {
-        name = s_;
-        s = s.Tail(2);
-    }
 
     while (true) {
-        if (strings::HasPrefix(s, "E")) {
-            ret.name = name;
-            ret.suffix = s.Tail(1);
-            return ret;
+        if (strings::HasPrefix(s, "I")) {
+            if (auto [tParam, tSuffix] = parseMangledName(s.Tail(1), s_); tParam != "") {
+                name = name + "<" + tParam + ">";
+                if (!strings::HasPrefix(tSuffix, "E")) {
+                    return {};
+                }
+                s = tSuffix.Tail(1);
+                continue;
+            }
+            return {};
+        } else if (strings::HasPrefix(s, "E")) {
+            return {name, s.Tail(1)};
+        } else if (strings::HasPrefix(s, "S_") && s_ != "") {
+            name = s_;
+            s = s.Tail(2);
+        } else {
+            auto [n, suffix] = numericPrefix(s);
+            if (n <= 0 || n > Len(suffix)) {
+                return {};
+            }
+            s = suffix;
+            if (Len(name) > 0) {
+                name = name + "::";
+            }
+            name = name + s.Head(n);
+            s = s.Tail(n);
         }
-
-        auto [n, suffix] = numericPrefix(s);
-        if (n <= 0 || n > Len(suffix)) {
-            return ret;
-        }
-        s = suffix;
-        if (Len(name) > 0) {
-            name = name + "::";
-        }
-        name = name + s.Head(n);
-        s = s.Tail(n);
     }
 }
 
@@ -79,31 +86,32 @@ static auto parseSymbol(String s) {
     s = s.Tail(3);
 
     auto [name, suffix] = parseMangledName(s);
-    if (name == "") {
+    if (name == "" || suffix == "") {
         return ret;
     }
     s = suffix;
 
-    if (!strings::HasPrefix(s, "P")) {
+    if (auto colon = strings::LastIndexByte(name, ':'); !strings::HasPrefix(colon > 0 ? name.Tail(colon + 1) : name, "Test")) {
         return ret;
     }
-    s = s.Tail(1);
 
     String s_;
     if (auto colon = strings::IndexRune(name, ':'); colon >= 0) {
         s_ = name.Head(colon);
     }
 
-    auto [arg, remaining] = parseMangledName(s, s_);
-    if (arg == "" || remaining != "") {
-        return ret;
+    auto isRawPointer = strings::HasPrefix(s, "P");
+    if (isRawPointer) {
+        s = s.Tail(1);
     }
 
-    if (auto colon = strings::LastIndexByte(name, ':'); !strings::HasPrefix(colon > 0 ? name.Tail(colon + 1) : name, "Test")) {
+    auto [arg, remaining] = parseMangledName(s, s_);
+    if (remaining != "" || !((isRawPointer && arg == "gostd::testing::T") || (!isRawPointer && arg == "gostd::Ptr<gostd::testing::T>"))) {
         return ret;
     }
 
     ret.test.Name = name;
+    ret.test.UsesRawPointer = isRawPointer;
     ret.ok = true;
     return ret;
 }
@@ -159,8 +167,14 @@ static auto findTestsInArchive(String path) {
 static Error writeMainCPP(io::Writer w, Slice<Test> tests) {
     if (auto [_, err] = w.Write(Slice<Byte>(R"cpp(
         namespace gostd {
+            template <typename T> struct Ptr;
             namespace testing {
                 class T;
+                struct testDef {
+                    const char* name;
+                    void(*rawPtrFunction)(T*);
+                    void(*ptrFunction)(Ptr<T>);
+                };
             }
         }
     )cpp")); err) {
@@ -172,7 +186,7 @@ static Error writeMainCPP(io::Writer w, Slice<Test> tests) {
             ns = ns.Head(Len(ns) - 2);
         }
         auto name = ns == "" ? tests[i].Name : tests[i].Name.Tail(Len(ns) + 2);
-        if (auto [_, err] = w.Write(Slice<Byte>("namespace " + ns + " { void " + name + "(::gostd::testing::T*); }\n")); err) {
+        if (auto [_, err] = w.Write(Slice<Byte>("namespace " + ns + " { void " + name + "(" + (tests[i].UsesRawPointer ? "::gostd::testing::T*" : "::gostd::Ptr<::gostd::testing::T>")+ "); }\n")); err) {
             return err;
         }
     }
@@ -180,30 +194,20 @@ static Error writeMainCPP(io::Writer w, Slice<Test> tests) {
         namespace gostd {
             namespace testing {
                 int testMain(int, const char*[]);
-                void(*testFunctions[])(T*) = {
+                testDef tests[] = {
     )cpp")); err) {
         return err;
     }
     for (Int i = 0; i < Len(tests); i++) {
-        if (auto [_, err] = w.Write(Slice<Byte>("&" + tests[i].Name + ",\n")); err) {
+        String s = "{\"" + tests[i].Name + "\", &" + tests[i].Name + ", nullptr},\n";
+        if (!tests[i].UsesRawPointer) {
+            s = "{\"" + tests[i].Name + "\", nullptr, &" + tests[i].Name + "},\n";
+        }
+        if (auto [_, err] = w.Write(Slice<Byte>(s)); err) {
             return err;
         }
     }
-    if (auto [_, err] = w.Write(Slice<Byte>(R"cpp(
-                0};
-                const char* testNames[] = {
-    )cpp")); err) {
-        return err;
-    }
-    for (Int i = 0; i < Len(tests); i++) {
-        if (auto [_, err] = w.Write(Slice<Byte>("\"" + tests[i].Name + "\",\n")); err) {
-            return err;
-        }
-    }
-    if (auto [_, err] = w.Write(Slice<Byte>("0};\n}}\n")); err) {
-        return err;
-    }
-    if (auto [_, err] = w.Write(Slice<Byte>("int main(int argc, const char* argv[]) { return ::gostd::testing::testMain(argc, argv); }\n")); err) {
+    if (auto [_, err] = w.Write(Slice<Byte>("{0}};\n}}\n\nint main(int argc, const char* argv[]) { return ::gostd::testing::testMain(argc, argv); }\n")); err) {
         return err;
     }
     return {};

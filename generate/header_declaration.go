@@ -2,7 +2,6 @@ package generate
 
 import (
 	"sort"
-	"strings"
 )
 
 type HeaderDeclaration interface {
@@ -69,7 +68,7 @@ func (d *StructDeclaration) Declaration() string {
 	for _, md := range d.MemberDeclarations {
 		ret += "    " + md.Declaration()
 	}
-	if d.Base != "" && !strings.HasPrefix(d.Base, "::gostd::Array") {
+	if d.Base != "" {
 		ret += "    template <typename... Args> explicit " + d.Name + "(Args&&... args) : " + d.Base + "(cpp::forward<Args>(args)...) {}\n"
 	}
 	ret += "};\n"

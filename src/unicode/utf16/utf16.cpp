@@ -46,7 +46,7 @@ n++;
 }
  else if ((((surrSelf<=v)&&(v<=maxRune)))) {
 _case7586:
-auto [r1, r2]=EncodeRune(v);
+auto [r1, r2] = EncodeRune(v);
 a[n]=::gostd::Uint16(r1);
 a[(n+1)]=::gostd::Uint16(r2);
 n+=2;
@@ -57,7 +57,7 @@ n++;
 }
 };
 };
-return a;
+return a.Head(n);
 }
 
 ::gostd::Slice<::gostd::Rune> Decode(::gostd::Slice<::gostd::Uint16> s) {
@@ -79,7 +79,7 @@ _case8260:a[n]=replacementChar;
 };
 n++;
 };
-return a;
+return a.Head(n);
 }
 
 } // namespace gostd::unicode::utf16

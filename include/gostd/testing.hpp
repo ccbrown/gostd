@@ -6,6 +6,18 @@ namespace gostd::testing {
 
 class T {
 public:
+    template <typename... Args>
+    void Error(Args&&... args) {
+        Log(cpp::forward<Args>(args)...);
+        Fail();
+    }
+
+    template <typename... Args>
+    void Errorf(Args&&... args) {
+        Logf(cpp::forward<Args>(args)...);
+        Fail();
+    }
+
     void Fail() { _failed = true; }
 
     void FailNow() {
@@ -26,12 +38,23 @@ public:
         fmt::Println(cpp::forward<Args>(args)...);
     }
 
+    template <typename... Args>
+    void Logf(String format, Args&&... args) {
+        fmt::Printf(format, cpp::forward<Args>(args)...);
+        fmt::Print("\n");
+    }
+
     void SkipNow() {
         Panic("how do i abort this test?");
     }
 
 private:
     bool _failed = false;
+};
+
+class B {
+public:
+    Int N;
 };
 
 int testMain(int argc, const char* argv[]);

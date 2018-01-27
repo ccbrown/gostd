@@ -950,6 +950,7 @@ extern ::gostd::Ptr<RangeTable> _Zs;
 extern ::gostd::Array<::gostd::Uint16, 128> asciiFold;
 
 struct d : ::gostd::Array<::gostd::Rune, 3> {
+    template <typename... Args> explicit d(Args&&... args) : ::gostd::Array<::gostd::Rune, 3>(cpp::forward<Args>(args)...) {}
 };
 
 struct CaseRange {

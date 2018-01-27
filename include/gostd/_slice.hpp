@@ -31,6 +31,18 @@ public:
         }
     }
 
+    template <typename U = T>
+    explicit Slice(String s, typename cpp::enable_if<cpp::is_same<U, Rune>::value>::type* = 0) : _data(Uint64(s.len())), _len{s.len()} {
+        Int i = 0;
+        for (auto [_, r] : s) {
+            _data[i] = r;
+            i++;
+        }
+        _len = i;
+    }
+
+    Slice(allocation<T> data, Int pos, Int len) : _data{data}, _pos{pos}, _len{len} {}
+
     explicit operator String() const {
         if (!_len) { return {}; }
         return String(reinterpret_cast<const char*>(&_data[_pos]), _len.value());
@@ -101,7 +113,7 @@ public:
         Slice slice;
         Int offset;
 
-        bool operator!=(const iterator& other) const { return offset == other.offset; }
+        bool operator!=(const iterator& other) const { return offset != other.offset; }
         iterator& operator++() { offset++; return *this; }
         Tuple<Int, T> operator*() const {
             return {offset, slice[offset]};
@@ -112,9 +124,6 @@ public:
     iterator end() { return {*this, _len}; }
 
 private:
-    Slice(allocation<T> data, Int pos, Int len)
-        : _data{data}, _pos{pos}, _len{len} {}
-
     void _append() {}
 
     template <typename... Rem>

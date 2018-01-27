@@ -1,10 +1,23 @@
 #pragma once
 
 #include <gostd.hpp>
+#include <gostd/errors.hpp>
 #include <gostd/io.hpp>
 #include <gostd/unicode/utf8.hpp>
 
 namespace gostd::bytes {
+
+static bool Equal(Slice<Byte> a, Slice<Byte> b) {
+    if (Len(a) != Len(b)) {
+        return false;
+    }
+    for (Int i = 0; i < Len(a); i++) {
+        if (a[i] != b[i]) {
+            return false;
+        }
+    }
+    return true;
+}
 
 static Int IndexByte(Slice<Byte> s, Byte b) {
     for (Int i = 0; i < Len(s); i++) {

@@ -23,6 +23,9 @@ int main(int argc, const char* argv[]) {
         return cmd::test::Run(args.Tail(2));
     }
 
+    String nullChar = "\x00";
+    fmt::Println(Len(nullChar));
+
     String nihongo = "日本語";
 
     for (Int i = 0; i < Len(nihongo); i++) {
@@ -33,10 +36,8 @@ int main(int argc, const char* argv[]) {
     }
     fmt::Println();
 
-    for (Int i = 0; i < Len(nihongo);) {
-        auto [r, size] = unicode::utf8::DecodeRuneInString(nihongo.Tail(i));
+    for (auto [i, r] : nihongo) {
         fmt::Println(r, "starts at byte", i);
-        i += size;
     }
 
     Tuple<int, const char*> x{1, "foo"};

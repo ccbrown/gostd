@@ -12,8 +12,15 @@ func main() {
 		IncludeDir: "./include",
 		SourceDir:  "./src",
 	}
-	for _, pkg := range []string{"unicode", "unicode/utf8", "unicode/utf16"} {
-		if err := g.TranspilePackage(pkg); err != nil {
+	for _, pkg := range []struct {
+		Path         string
+		IncludeTests bool
+	}{
+		{Path: "unicode"},
+		{Path: "unicode/utf8", IncludeTests: true},
+		{Path: "unicode/utf16"},
+	} {
+		if err := g.TranspilePackage(pkg.Path, pkg.IncludeTests); err != nil {
 			fmt.Fprintf(os.Stderr, err.Error())
 		}
 	}

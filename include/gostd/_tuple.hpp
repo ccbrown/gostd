@@ -5,6 +5,7 @@ namespace gostd {
 template <typename First, typename... Rem>
 class Tuple {
 public:
+    constexpr Tuple() = default;
     constexpr Tuple(First first, Rem... rem) : _element{cpp::move(first)}, _remaining{cpp::move(rem)...} {}
 
     static constexpr int Size = 1 + sizeof...(Rem);
@@ -28,6 +29,7 @@ private:
 template <typename T>
 class Tuple<T> {
 public:
+    constexpr Tuple() = default;
     explicit Tuple(T element) : _element{cpp::move(element)} {}
 
     static constexpr int Size = 1;
