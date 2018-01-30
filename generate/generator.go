@@ -4,7 +4,6 @@ import (
 	"fmt"
 	"go/ast"
 	"go/build"
-	"go/importer"
 	"go/parser"
 	"go/token"
 	"go/types"
@@ -19,7 +18,8 @@ type Generator struct {
 }
 
 func (g *Generator) TranspilePackage(path string, includeTests bool) error {
-	pkg, err := build.Import(path, ".", 0)
+	buildContext := build.Default
+	pkg, err := buildContext.Import(path, ".", 0)
 	if err != nil {
 		return err
 	}
@@ -31,7 +31,11 @@ func (g *Generator) TranspilePackage(path string, includeTests bool) error {
 		return err
 	}
 
-	declarations, err := g.transpileFiles(pkg, pkg.GoFiles)
+	goFiles := append([]string(nil), pkg.GoFiles...)
+	if includeTests {
+		goFiles = append(goFiles, pkg.TestGoFiles...)
+	}
+	declarations, err := g.transpileFiles(&buildContext, pkg, goFiles, includeTests)
 	if err != nil {
 		return err
 	}
@@ -42,7 +46,7 @@ func (g *Generator) TranspilePackage(path string, includeTests bool) error {
 
 	if includeTests {
 		if len(pkg.XTestGoFiles) > 0 {
-			declarations, err := g.transpileFiles(pkg, pkg.XTestGoFiles)
+			declarations, err := g.transpileFiles(&buildContext, pkg, pkg.XTestGoFiles, true)
 			if err != nil {
 				return err
 			}
@@ -56,7 +60,7 @@ func (g *Generator) TranspilePackage(path string, includeTests bool) error {
 	return nil
 }
 
-func (g *Generator) transpileFiles(pkg *build.Package, fileNames []string) ([]HeaderDeclaration, error) {
+func (g *Generator) transpileFiles(buildContext *build.Context, pkg *build.Package, fileNames []string, includesTestFiles bool) ([]HeaderDeclaration, error) {
 	pg := &PackageGenerator{
 		IncludeDir: g.IncludeDir,
 		SourceDir:  g.SourceDir,
@@ -99,7 +103,7 @@ func (g *Generator) transpileFiles(pkg *build.Package, fileNames []string) ([]He
 	}
 
 	conf := &types.Config{
-		Importer: importer.Default(),
+		Importer: NewImporter(buildContext, includesTestFiles),
 	}
 	if _, err := conf.Check(pkgName, fset, files, pg.TypeInfo); err != nil {
 		return nil, err

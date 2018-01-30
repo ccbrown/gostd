@@ -17,6 +17,7 @@ type FileGenerator struct {
 	inPackageDeclarationIds map[string]bool
 	thisObjectPos           token.Pos
 	iotaValue               int
+	additionalDeclarations  []HeaderDeclaration
 }
 
 func (g *FileGenerator) namespaceForPackage(pkg string) string {
@@ -54,6 +55,24 @@ func (g *FileGenerator) transpileType(t types.Type) string {
 		return "::gostd::Ptr<" + g.transpileType(t.Elem()) + ">"
 	case *types.Slice:
 		return "::gostd::Slice<" + g.transpileType(t.Elem()) + ">"
+	case *types.Struct:
+		if t.NumFields() == 0 {
+			panic("empty struct not yet supported")
+		}
+		name := fmt.Sprintf("_struct%v", t.Field(0).Pos())
+		g.trackDependencyDeclarationId(name)
+
+		declaration := &StructDeclaration{
+			Name: name,
+		}
+		for i := 0; i < t.NumFields(); i++ {
+			field := t.Field(i)
+			declaration.FieldAndBaseDependencies = append(declaration.FieldAndBaseDependencies, g.trackDependencyDeclarationIds(func() {
+				declaration.FieldDeclarations = append(declaration.FieldDeclarations, g.transpileType(field.Type())+" "+field.Name()+";\n")
+			})...)
+		}
+		g.additionalDeclarations = append(g.additionalDeclarations, declaration)
+		return name
 	}
 	panic(fmt.Errorf("unsupported type type %T\n", t))
 }
@@ -483,12 +502,16 @@ func (g *FileGenerator) trackDependencyDeclarationId(id string) {
 }
 
 func (g *FileGenerator) trackDependencyDeclarationIds(f func()) (ids []string) {
+	before := g.inPackageDeclarationIds
 	g.inPackageDeclarationIds = make(map[string]bool)
 	f()
 	for k := range g.inPackageDeclarationIds {
 		ids = append(ids, k)
+		if before != nil {
+			before[k] = true
+		}
 	}
-	g.inPackageDeclarationIds = nil
+	g.inPackageDeclarationIds = before
 	return
 }
 
@@ -563,6 +586,14 @@ func (g *FileGenerator) transpileHeaderDeclaration(decl ast.Decl) (declarations 
 		declarations = append(declarations, StaticDeclaration(decl.Name.Name, s, deps, parent))
 	}
 	return
+}
+
+func (g *FileGenerator) transpileTopLevelDeclaration(decl ast.Decl) (string, []HeaderDeclaration) {
+	declarations := g.transpileHeaderDeclaration(decl)
+	cpp := g.transpileDeclaration(decl, true)
+	declarations = append(declarations, g.additionalDeclarations...)
+	g.additionalDeclarations = nil
+	return cpp, declarations
 }
 
 func (g *FileGenerator) transpileDeclaration(decl ast.Decl, hasHeaderDeclarations bool) string {

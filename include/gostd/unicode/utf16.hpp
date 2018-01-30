@@ -17,7 +17,15 @@ namespace gostd::unicode::utf16 {
 
 constexpr auto maxRune = ::gostd::UntypedConstant(1114111);
 
+#if GOSTD_TEST
+constexpr auto MaxRune = ::gostd::UntypedConstant(maxRune);
+#endif
+
 constexpr auto replacementChar = ::gostd::UntypedConstant(65533);
+
+#if GOSTD_TEST
+constexpr auto ReplacementChar = ::gostd::UntypedConstant(replacementChar);
+#endif
 
 constexpr auto surr1 = ::gostd::UntypedConstant(55296);
 

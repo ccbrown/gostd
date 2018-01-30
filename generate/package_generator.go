@@ -31,22 +31,30 @@ func (g *PackageGenerator) TranspileGoFile(f *ast.File, name, pkgDir, pkgPath st
 	}
 
 	includePath := filepath.Join(filepath.Dir(pkgPath), f.Name.Name)
+	namespace := "gostd::" + strings.Join(strings.Split(includePath, "/"), "::")
+
 	fmt.Fprint(cpp, "// THIS FILE WAS GENERATED VIA TRANSPILING. DO NOT MODIFY.\n")
+	if strings.HasSuffix(name, "_test.go") || strings.HasSuffix(namespace, "_test") {
+		fmt.Fprint(cpp, "#define GOSTD_TEST 1\n\n")
+	}
 	fmt.Fprint(cpp, "#include <"+filepath.Join("gostd", includePath)+".hpp>\n\n")
 	fmt.Fprint(cpp, "#pragma clang diagnostic push\n")
 	fmt.Fprint(cpp, "#pragma clang diagnostic ignored \"-Wparentheses-equality\"\n\n")
-
-	namespace := "gostd::" + strings.Join(strings.Split(includePath, "/"), "::")
 
 	fmt.Fprintf(cpp, "namespace %v {\n\n", namespace)
 
 	var declarations []HeaderDeclaration
 
 	for _, decl := range f.Decls {
-		if hppDecls := fg.transpileHeaderDeclaration(decl); hppDecls != nil {
-			declarations = append(declarations, hppDecls...)
+		cppDecl, hppDecls := fg.transpileTopLevelDeclaration(decl)
+		for _, hppDecl := range hppDecls {
+			if strings.HasSuffix(name, "_test.go") && !strings.HasSuffix(namespace, "_test") {
+				declarations = append(declarations, ConditionalHeaderDeclaration(hppDecl, "GOSTD_TEST"))
+			} else {
+				declarations = append(declarations, hppDecl)
+			}
 		}
-		if cppDecl := fg.transpileDeclaration(decl, true); cppDecl != "" {
+		if cppDecl != "" {
 			fmt.Fprint(cpp, cppDecl+"\n")
 		}
 	}

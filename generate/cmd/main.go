@@ -18,7 +18,7 @@ func main() {
 	}{
 		{Path: "unicode"},
 		{Path: "unicode/utf8", IncludeTests: true},
-		{Path: "unicode/utf16"},
+		{Path: "unicode/utf16", IncludeTests: true},
 	} {
 		if err := g.TranspilePackage(pkg.Path, pkg.IncludeTests); err != nil {
 			fmt.Fprintf(os.Stderr, err.Error())

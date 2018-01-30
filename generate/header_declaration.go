@@ -2,6 +2,7 @@ package generate
 
 import (
 	"sort"
+	"strings"
 )
 
 type HeaderDeclaration interface {
@@ -89,6 +90,22 @@ func (d *StructDeclaration) ParentId() string {
 
 func (d *StructDeclaration) AddChild(decl HeaderDeclaration) {
 	d.MemberDeclarations = append(d.MemberDeclarations, decl)
+}
+
+type conditionalHeaderDeclaration struct {
+	HeaderDeclaration
+	condition string
+}
+
+func (d *conditionalHeaderDeclaration) Declaration() string {
+	return "#if " + d.condition + "\n" + strings.TrimSpace(d.HeaderDeclaration.Declaration()) + "\n#endif\n"
+}
+
+func ConditionalHeaderDeclaration(decl HeaderDeclaration, condition string) HeaderDeclaration {
+	return &conditionalHeaderDeclaration{
+		HeaderDeclaration: decl,
+		condition:         condition,
+	}
 }
 
 func SortHeaderDeclarations(decls []HeaderDeclaration) (result []HeaderDeclaration) {

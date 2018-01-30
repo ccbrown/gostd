@@ -1,4 +1,6 @@
 // THIS FILE WAS GENERATED VIA TRANSPILING. DO NOT MODIFY.
+#define GOSTD_TEST 1
+
 #include <gostd/unicode/utf8_test.hpp>
 
 #pragma clang diagnostic push

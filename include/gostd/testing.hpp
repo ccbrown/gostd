@@ -52,9 +52,12 @@ private:
     bool _failed = false;
 };
 
+// TODO
 class B {
 public:
     Int N;
+
+    void ResetTimer() {}
 };
 
 int testMain(int argc, const char* argv[]);
