@@ -51,6 +51,18 @@ public:
         }
         return true;
     }
+    template <cpp::size_t N>
+    constexpr bool operator==(const char(&s)[N]) const {
+        if (_str == nullptr || _strlen != N) {
+            return false;
+        }
+        for (cpp::size_t i = 0; i < N; ++i) {
+            if (s[i] != _str[i]) {
+                return false;
+            }
+        }
+        return true;
+    }
 
     template <typename T, typename = typename cpp::enable_if<cpp::is_integral<T>::value>::type>
     constexpr bool operator!=(T right) const { return !(*this == right); }

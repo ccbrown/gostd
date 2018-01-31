@@ -219,6 +219,21 @@ func (g *FileGenerator) transpileExpression(expr ast.Expr) string {
 			return "::gostd::Make<" + g.transpileTypeExpression(expr.Args[0]) + ">(" + strings.Join(g.transpileExpressions(expr.Args[1:]), ", ") + ")"
 		}
 		return g.transpileExpression(expr.Fun) + "(" + strings.Join(g.transpileExpressions(expr.Args), ", ") + ")"
+	case *ast.FuncLit:
+		ret := "[=]("
+		first := true
+		for _, field := range expr.Type.Params.List {
+			for _, name := range field.Names {
+				if !first {
+					ret += ", "
+				}
+				ret += fmt.Sprintf("%v %v", g.transpileTypeExpression(field.Type), name)
+				first = false
+			}
+		}
+		ret += ") -> " + g.transpileFunctionResults(expr.Type.Results) + " "
+		ret += g.transpileStatement(expr.Body)
+		return ret
 	case *ast.IndexExpr:
 		return g.transpileExpression(expr.X) + "[" + g.transpileExpression(expr.Index) + "]"
 	case *ast.ParenExpr:
@@ -254,6 +269,8 @@ func (g *FileGenerator) transpileExpression(expr ast.Expr) string {
 			op = "->"
 		}
 		return g.transpileExpression(expr.X) + op + expr.Sel.Name
+	case *ast.StarExpr:
+		return "*" + g.transpileExpression(expr.X)
 	}
 	panic(fmt.Errorf("unsupported expression type %T\n", expr))
 }
@@ -452,26 +469,29 @@ func (g *FileGenerator) transpileStatement(stmt ast.Stmt) string {
 	panic(fmt.Errorf("unsupported statement type %T\n", stmt))
 }
 
-func (g *FileGenerator) transpileFunctionDeclaration(decl *ast.FuncDecl, withStructPrefix bool) string {
-	ret := ""
-	if decl.Type.Results == nil || len(decl.Type.Results.List) == 0 {
-		ret += "void"
-	} else if len(decl.Type.Results.List) == 1 && len(decl.Type.Results.List[0].Names) <= 1 {
-		ret += g.transpileTypeExpression(decl.Type.Results.List[0].Type)
-	} else {
-		first := true
-		ret += "::gostd::Tuple<"
-		for _, field := range decl.Type.Results.List {
-			for _ = range field.Names {
-				if !first {
-					ret += ", "
-				}
-				ret += g.transpileTypeExpression(field.Type)
-				first = false
-			}
-		}
-		ret += ">"
+func (g *FileGenerator) transpileFunctionResults(results *ast.FieldList) string {
+	if results == nil || len(results.List) == 0 {
+		return "void"
+	} else if len(results.List) == 1 && len(results.List[0].Names) <= 1 {
+		return g.transpileTypeExpression(results.List[0].Type)
 	}
+	first := true
+	ret := "::gostd::Tuple<"
+	for _, field := range results.List {
+		for _ = range field.Names {
+			if !first {
+				ret += ", "
+			}
+			ret += g.transpileTypeExpression(field.Type)
+			first = false
+		}
+	}
+	ret += ">"
+	return ret
+}
+
+func (g *FileGenerator) transpileFunctionDeclaration(decl *ast.FuncDecl, withStructPrefix bool) string {
+	ret := g.transpileFunctionResults(decl.Type.Results)
 	name := decl.Name.Name
 	if withStructPrefix && decl.Recv != nil {
 		name = g.transpileTypeExpression(decl.Recv.List[0].Type) + "::" + name
